@@ -3,8 +3,8 @@
 # ----------------------- #
 
 url: http://ksauzz.github.com
-title: ksauzz's weblog
-subtitle: techniqual note....
+title: ksauzz weblog
+subtitle: technical note....
 author: ksauzz
 simple_search: http://google.com/search
 description:
@@ -93,7 +93,7 @@ disqus_short_name: ksauzz-octopress
 disqus_show_comment_count: false
 
 # Google Analytics
-google_analytics_tracking_id:
+google_analytics_tracking_id: UA-29777654-1
 
 # Facebook Like
 facebook_like: true
