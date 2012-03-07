@@ -89,7 +89,7 @@ delicious_user: ksauzz
 delicious_count: 3
 
 # Disqus Comments
-disqus_short_name: ksauzz
+disqus_short_name: ksauzz-octopress
 disqus_show_comment_count: false
 
 # Google Analytics
