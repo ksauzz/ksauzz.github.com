@@ -56,7 +56,8 @@ githubと連携することで、公開しているOSSプロダクトの自動�
 
 4. 連携確認
 
-    ビルド対象のリポジトリでgit pushするか、Github Admin画面内のServiceHookでHookTestを実行する。
+    ビルド対象のリポジトリでgit pushするか、Github Admin画面内のServiceHookでHookTestを実行するとビルドが行われます。
+    ビルドの結果はTravisCIの画面で確認できます。
 
     {% img /images/travis_result.png %}
 
