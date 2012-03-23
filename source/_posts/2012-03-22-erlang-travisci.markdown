@@ -1,18 +1,20 @@
 ---
 layout: post
-title: "ErlangとTravisCIの連携"
+title: "TravisCIによるErlangアプリケーションの自動ビルド"
 date: 2012-03-22 20:47
 comments: true
 categories:
 ---
 
-## TravisCIとは (http://travis-ci.org/)
+ErlangプロジェクトをTravisCIでビルドする手順とビルドステータスの公開方法について。
+
+## TravisCIとは [http://travis-ci.org/](http://travis-ci.org/)
 
 オープンソース向けのCI(Continuous Integration)ホスティングサービスです。
 数多くのプログラミング言語がサポートされており、
 githubと連携することで、公開しているOSSプロダクトの自動ビルドを手軽に行うことができます。
 
-また、データストア(下記)を利用したテストも実行可能です。(詳細は省きます)
+また、下記データストアを利用したテストも実行可能です。(詳細は省きます)
 
 - MySQL
 - PostgreSQL
@@ -23,10 +25,11 @@ githubと連携することで、公開しているOSSプロダクトの自動�
 - Riak
 - Memcached
 
-## 連携手順 
+## ビルド設定
 
 
-1. *signin with Github*からTravisCIへログインします。
+1. 画面右上の*signin with Github*からTravisCIへログインします。
+    Githubへ遷移するので認証を許可します。
 
     {% img /images/travis_authorizing.png %}
 
@@ -38,47 +41,58 @@ githubと連携することで、公開しているOSSプロダクトの自動�
 
     ビルド対象のリポジトリのルートディレクトリに.travis.ymlという設定ファイルを用意します。
 
-    設定内容
-    - language: erlangビルドであることを指定
-    - otp_release: ビルド対象のOTPバージョンを指定
-    - notifications: メール通知設定
-
     {% gist 2157919 .travis.yml %}
+    ここでは以下を設定しています。
+    - language: Erlangプロジェクトであることを指定
+    - otp_release: ビルド対象のOTPバージョンを指定。(複数可)
+    - notifications: ビルド失敗時のメール通知設定
 
-    デフォルトでは以下のテストで実行されます。
-    {% codeblock %}
-    rebar compile && rebar skip_deps=true eunit
-    {% endcodeblock %}
-    ルートディレクトリにrebar.configが見つからない場合にはmake testが実行される様です。
-    {% codeblock %}
-    make test
-    {% endcodeblock %}
+    他言語における設定方法は[こちら](http://about.travis-ci.org/docs/user/languages/)
 
-4. 連携確認
+4. github連携確認
+    
+    設定が完了したので実際にビルドを起動させます。
 
-    ビルド対象のリポジトリでgit pushするか、Github Admin画面内のServiceHookでHookTestを実行するとビルドが行われます。
-    ビルドの結果はTravisCIの画面で確認できます。
+    連携したリポジトリでgit push、もしくはGithub Admin画面内のServiceHookでHookTestを実行すると、TravisCIのビルドが起動します。
+    ビルドの進捗、結果はTravisCIの画面で確認できます。
 
     {% img /images/travis_result.png %}
+  
+以上で設定、動作確認は終了です。
 
-5. READMEファイルにビルドステータスを表示
+### 実行されるテスト
 
-    ビルドステータスを画像データで取得することができます。
-    https://secure.travis-ci.org/*github_id*/*repository_name*.png
+Erlangプロジェクトで以下のコマンドがデフォルトのテストとして実行されます。
+{% codeblock %}
+rebar compile && rebar skip_deps=true eunit
+{% endcodeblock %}
 
-    {% img /images/travis_build_status.png %}
+ルートディレクトリにrebar.configが見つからない場合にはmake testが実行される様です。
 
-    READMEファイルで最近見かけるこれです↓
-    適当にREADMEファイルで読み込みましょう。
+{% codeblock %}
+make test
+{% endcodeblock %}
 
-    {% img /images/travis_build_status_img.png %}
+## READMEファイルでビルドステータスを公開
+
+READMEファイルで最近見かけるビルドステータスです。
+適当にREADMEファイルで画像データを読み込むだけで手軽にビルドステータスが公開できます。
+
+{% img /images/travis_build_status_img.png %}
+
+- ビルドステータス取得URL
+
+https://secure.travis-ci.org/*github_id*/*repository_name*.png
+{% img /images/travis_build_status.png %}
+
 
 ### 注意事項
 
 - テスト実行時のport bindingはwell-knownportを避けた方が無難。
-  11211ポートを使うテストがテストがコケてた。利用可能なポート番号は特に公開されていない。
+  11211ポートを使うテストがテストがコケてた。(利用可能なポート番号は特に公開されていない。)
 
 ## まとめ
 
 以上、簡単ですがTravisCIの利用方法をまとめてみました。
-自動ビルド設定やビルドステータスの公開が、かなり手軽にできるのでTravisCIはオススメです。
+自動ビルド設定やビルドステータスの公開が、かなり手軽にできるので、
+Githubで公開されているプロジェクトにはオススメのサービスです。
