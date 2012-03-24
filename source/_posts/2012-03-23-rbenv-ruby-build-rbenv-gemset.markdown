@@ -7,15 +7,13 @@ categories: ruby
 ---
 
 近頃、RVMは散々オワコン呼ばわりされているので、とりあえずrbenvを使ってます。
-Linuxへのインストール手順のまとめが見当たらなかったので自分でまとめておきます。
+Linuxへのインストール手順のまとめが見当たらなかったのでまとめておきます。
 
 # MacOS
 
     sudo brew install rbenv ruby-build rbenv-gemset
 
 # Linux
-
-Homebrewを使わないセットアップ方法のまとめ。
 
 ## install rbenv
 
