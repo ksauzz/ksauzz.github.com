@@ -15,11 +15,11 @@ Linuxへのインストール手順のまとめが見当たらなかったので
 
 ## rbenv with homebrew's readline
 
-参考： http://blog.twiwt.org/e/66a1d0
+参考： [http://blog.twiwt.org/e/66a1d0](http://blog.twiwt.org/e/66a1d0)
 
-  brew install readline
-  brew link readline
-  CONFIGURE_OPTS="--with-readline-dir=/usr/local" rbenv install 1.9.2-p290
+    brew install readline
+    brew link readline
+    CONFIGURE_OPTS="--with-readline-dir=/usr/local" rbenv install 1.9.2-p290
 
 # Linux
 
