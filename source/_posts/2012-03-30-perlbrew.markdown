@@ -1,0 +1,31 @@
+---
+layout: post
+title: "setup perlbrew and cpanminus."
+date: 2012-03-30 19:38
+comments: true
+categories: 
+---
+
+# perlbrew
+[http://perlbrew.pl/](http://perlbrew.pl/)
+
+install perlbrew into *$HOME/.perlbrew* (default install path is *$HOME/perl5*)
+
+    echo "export PERLBREW_ROOT=$HOME/.perlbrew" >> .zshrc
+    curl -kL http://install.perlbrew.pl | bash
+    echo "[[ -s ~/.perlbrew/etc/bashrc ]] && source ~/.perlbrew/etc/bashrc" >> .zshrc
+
+    perlbrew install perl-5.15.9
+    perlbrew switch perl-5.15.9
+    
+# cpanminus
+[https://github.com/miyagawa/cpanminus](https://github.com/miyagawa/cpanminus)
+
+install cpanm 
+
+    perlbrew install-cpanm
+
+install module
+
+    cpanm module_name
+
