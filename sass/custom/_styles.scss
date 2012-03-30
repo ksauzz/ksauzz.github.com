@@ -1,2 +1,18 @@
 // This File is imported last, and will override other styles in the cascade
 // Add styles here to make changes without digging in too much
+article {
+  font-size: .85em;
+  margin-bottom: 1em;
+  h1 {
+    margin-bottom: .5em;
+  }
+}
+body > nav {
+  font-size: .80em;
+  padding-top: .15em;
+  padding-bottom: .15em;
+}
+body > header h1 {
+  line-height: 1em; 
+}
+h1 { line-height: 1em; }
