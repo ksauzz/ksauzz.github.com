@@ -3,7 +3,7 @@ layout: post
 title: "TravisCIによるErlangアプリケーションの自動ビルド"
 date: 2012-03-22 20:47
 comments: true
-categories:
+categories: erlang
 ---
 
 ErlangプロジェクトをTravisCIでビルドする手順とビルドステータスの公開方法について。

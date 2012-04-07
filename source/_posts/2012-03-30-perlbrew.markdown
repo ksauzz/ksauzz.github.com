@@ -3,7 +3,7 @@ layout: post
 title: "setup perlbrew and cpanminus."
 date: 2012-03-30 19:38
 comments: true
-categories: 
+categories: perl
 ---
 
 # perlbrew
