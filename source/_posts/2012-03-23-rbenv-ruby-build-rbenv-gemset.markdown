@@ -6,7 +6,7 @@ comments: true
 categories: ruby
 ---
 
-近頃、RVMは散々オワコン呼ばわりされているので、とりあえずrbenvを使ってます。
+近頃、RVMはオワコン呼ばわりされているので、rbenvを使ってます。
 Linuxへのインストール手順のまとめが見当たらなかったのでまとめておきます。
 
 # MacOS
@@ -27,7 +27,7 @@ Linuxへのインストール手順のまとめが見当たらなかったので
 
 ダウンロード
 
-    cd 
+    cd
     git clone git://github.com/sstephenson/rbenv.git .rbenv
 
 シェルの設定(zsh)
@@ -36,6 +36,16 @@ Linuxへのインストール手順のまとめが見当たらなかったので
     source ~/.zshrc
 
 *bashの場合は ~/.bash_profileへ設定する.*
+
+### trouble shoot
+
+シェル初期化時に以下のエラーが発生することがある。
+
+    $HOME/.rbenv/libexec/../completions/rbenv.bash:14: command not found: complete
+
+この場合、.zshrcの設定を以下に変更
+
+    eval "$(rbenv init - zsh)"
 
 ## install ruby-build
 
