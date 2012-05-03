@@ -100,5 +100,5 @@ facebook_like: true
 
 # Gravator
 gravatar_hash: 3cb9536d180c2144c16db29a34e2fd39
-gravatar_size: 120
+gravatar_size: 80
 
