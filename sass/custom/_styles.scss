@@ -3,6 +3,7 @@
 article {
   font-size: .85em;
   margin-bottom: 1em;
+
   h1 {
     margin-bottom: .5em;
   }
@@ -13,6 +14,56 @@ body > nav {
   padding-bottom: .15em;
 }
 body > header h1 {
-  line-height: 1em; 
+  line-height: 1em;
 }
 h1 { line-height: 1em; }
+
+// TODO: refactor
+table {
+  margin-bottom: 20px;
+  padding-left: 10px;
+  padding-right: 10px;
+  color: #93A1A1;
+  th, td {
+    border-width: 1px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  th {
+    background-color: #EAEAEA;
+    font-weight: bold;
+    color: #4B4B4B;
+    border-bottom: solid;
+    border-width: 1px;
+  }
+  thead {
+    th:first-child {
+      background-color: #EAEAEA;
+      border-radius: 0.4em 0 0 0;
+    }
+    th:last-child {
+      background-color: #EAEAEA;
+      border-radius: 0 0.4em 0 0;
+    }
+  }
+  tbody {
+    tr:nth-child(odd) {
+      background-color: #073642;
+    }
+    tr:nth-child(even) {
+      background-color: #002B36;
+    }
+  }
+}
+
+figure {
+  table {
+    border-style:none;
+    margin-bottom: 0px;
+    th, td {
+      border-style:none;
+      padding-left: 0px;
+      padding-right: 0px;
+    }
+  }
+}
