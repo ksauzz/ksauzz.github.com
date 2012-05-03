@@ -1,0 +1,94 @@
+---
+layout: post
+title: "gitメモ"
+date: 2012-05-02 23:29
+comments: true
+categories: git
+---
+
+Gitのメモ
+git-svnがメインかも…
+
+# git svn
+
+ 説明                                     | コマンド
+------------------------------------------|--------------------------------------------------------------
+ 標準ディレクトリ構成にてクローン         |  git svn clone -s --prefix=svn/ _url_
+ clone時のリビジョン指定(depth)           |  git svn clone -s --prefix=svn/ -r $REV:HEAD _url_
+ svnの変更に追従                          |  git svn rebase
+ svnへコミット                            |  git svn dcommit
+ svnリポジトリの変更を取得                |  git svn fetch svn
+ svn側にブランチ作成                      |  git svn branch _branch_
+ svn側にタグ打ち                          |  git svn tag _version_ (-n dry-run)
+ svnブランチに紐付くローカルブランチの作成|  git branch _local-branch_ _remotes/svn/branch_
+                                          |  git checkout -b _local-branch_ _remotes/svn/branch_
+
+## merge時の注意
+
+svnブランチを参照しているブランチからmergeするときは``--no-ff``オプションを使うこと。fast-fowardだとremoteブランチが切り替わる。
+誤って実行した場合はreset等で対処。
+
+
+## ローカルブランチのコミットを履歴を維持したままsvnブランチへコミットする
+
+    git branch local_branch
+    // edit & commit
+    git svn branch remote_branch
+    git checkout -b svn_sync_branch remotes/svn/remote_branch
+    git rebase svn_sync_branch
+    git svn dcommit
+
+# その他
+
+## commit
+
+    git commit -m msg
+    git commit --amend
+
+## checkout
+
+    git checkout -b branch_name
+
+## rm
+
+remove from index
+
+    git rm --cached item
+
+## reset
+
+    git reset .
+    git reset --soft HEAD^
+    git reset --hard HEAD^
+
+## rebase
+
+    rebase -i HEAD^^^
+    rebase --onto base_branch current_branch branch
+
+## git reflog
+
+説明                 | コマンド
+---------------------|------------------------------
+rebase前の情報を取得 |  git reflog show _branch_
+
+## git clean
+
+ 説明               | コマンド
+--------------------|----------------
+ .gitignoreを無視   |   git clean -x
+ ディレクトリも削除 |   git clean -d
+
+## change author and commiter
+
+    git filter-branch --commit-filter '
+    if [ "$GIT_COMMITTER_NAME" = "old_name" ]; then
+        GIT_AUTHOR_NAME="new_author_name"
+        GIT_AUTHOR_EMAIL="new_author_email"
+        GIT_COMMITTER_NAME="new_comitter_name"
+        GIT_COMMITTER_EMAIL="new_commiter_email"
+    fi
+    git commit-tree "$@"
+    ' HEAD
+
+参考：[http://d.hatena.ne.jp/idesaku/20090908/1252419890](http://d.hatena.ne.jp/idesaku/20090908/1252419890)
