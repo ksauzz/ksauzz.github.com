@@ -38,6 +38,26 @@ svnブランチを参照しているブランチからmergeするときは``--no
     git rebase svn_sync_branch
     git svn dcommit
 
+# git flow
+
+* 記事：[http://nvie.com/posts/a-successful-git-branching-model/](http://nvie.com/posts/a-successful-git-branching-model/)
+* 日本語訳：[http://keijinsonyaban.blogspot.jp/2010/10/successful-git-branching-model.html](http://keijinsonyaban.blogspot.jp/2010/10/successful-git-branching-model.html)
+
+## 既存プロジェクトの初期化
+これをしないとdevelopの変更がlocalのmasterに入ってしまう。
+
+    git clone url
+    git checkout --track origin/master
+    git flow init
+
+## featureコマンド
+
+ 説明                                   | コマンド
+----------------------------------------|--------------------------------------------------------------
+ featureブランチ作成                    |  git flow feature start _branch_
+ featureブランチをpush                  |  git flow feature publish _branch_
+ featureブランチ終了(developへのmerge)  |  git flow feature finish _branch_
+
 # その他
 
 ## commit
