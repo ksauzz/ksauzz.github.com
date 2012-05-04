@@ -40,23 +40,26 @@ svnブランチを参照しているブランチからmergeするときは``--no
 
 # git flow
 
-* 記事：[http://nvie.com/posts/a-successful-git-branching-model/](http://nvie.com/posts/a-successful-git-branching-model/)
-* 日本語訳：[http://keijinsonyaban.blogspot.jp/2010/10/successful-git-branching-model.html](http://keijinsonyaban.blogspot.jp/2010/10/successful-git-branching-model.html)
+* [git plugin](https://github.com/nvie/gitflow)
+* [A successful git branching model.](http://nvie.com/posts/a-successful-git-branching-model/)
+* [日本語訳](http://keijinsonyaban.blogspot.jp/2010/10/successful-git-branching-model.html)
 
 ## 既存プロジェクトの初期化
-これをしないとdevelopの変更がlocalのmasterに入ってしまう。
 
     git clone url
     git checkout --track origin/master
     git flow init
+
+これをしないとdevelopの変更がlocalのmasterに入ってしまう。
 
 ## featureコマンド
 
  説明                                   | コマンド
 ----------------------------------------|--------------------------------------------------------------
  featureブランチ作成                    |  git flow feature start _branch_
- featureブランチをpush                  |  git flow feature publish _branch_
  featureブランチ終了(developへのmerge)  |  git flow feature finish _branch_
+ featureブランチをpush                  |  git flow feature publish _branch_
+ featureブランチのpull                  |  git flow feature pull origin _branch_
 
 # その他
 
@@ -68,6 +71,7 @@ svnブランチを参照しているブランチからmergeするときは``--no
 ## checkout
 
     git checkout -b branch_name
+    git checkout -b branch_name origin/branch
 
 ## rm
 
