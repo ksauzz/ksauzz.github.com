@@ -1,0 +1,156 @@
+---
+layout: post
+title: "Cowboyメモ"
+date: 2012-05-04 21:50
+comments: true
+categories: erlang cowboy
+---
+
+CowboyはErlangの軽量Webアプリケーションフレームワークです。
+まだドキュメント化されていない部分が多いので軽くメモ。
+
+## 基本
+
+基本的な利用方法は某氏のブログをどうぞ。
+
+[http://d.hatena.ne.jp/Voluntas/20120407/1333784371](http://d.hatena.ne.jp/Voluntas/20120407/1333784371)
+
+## リクエストの処理
+
+cowboyではhandle/2の引数に[#http\_req](https://github.com/extend/cowboy/blob/master/include/http.hrl)が渡ってきます。
+基本的にはこのhttp\_reqをcowboy\_http\_reqの関数へ渡し、リクエストデータの取得、レスポンスデータの生成を行います。
+
+### レスポンスの送信
+
+レスポンスの送信にはcowboy\_http\_req:reply/xを使います。
+下記ではステータスコード、レスポンスボディ、レスポンスヘッダーをreply関数へ渡し、
+レスポンスを送信しています。
+
+```erlang
+handle(Req, State) ->
+    StatusCode  = 200,
+    Body = <<"Hello world!!">>,
+    Header = [{'Server', [<<"Hello Cowboy Server!!!">>]}],
+    {ok, Req2} = cowboy_http_req:reply(StatusCode, Header, Body, Req),
+    {ok, Req2, State}.
+```
+
+このコードはcowboy_http_reqモジュールのset_resp_xxx関数を使って以下の様に書くこともできます。
+ここで新しく生成されるReq_x_には、セットしたレスポンスボディ、レスポンスヘッダーがセットされています。
+
+```erlang
+handle(Req, State) ->
+    StatusCode  = 200,
+    Body = <<"Hello world!!">>,
+    {ok, Req1} = cowboy_http_req:set_resp_body(Body, Req),
+    {ok, Req2} = cowboy_http_req:set_resp_header('Server', <<"Hello Cowboy Server!!">>, Req1),
+    {ok, Req3} = cowboy_http_req:reply(StatusCode, Req2),
+    {ok, Req3, State}.
+```
+
+### URL Queryの取得
+Queryはcowboy_http_req:qs_vals/1, qs_val/2, qs_val/3で取得できます。
+
+```erlang
+handle(Req, State) ->
+    {QsList, Req1} = cowboy_http_req:qs_vals(Req),
+    ...
+    {Value, Req1} = cowboy_http_req:qs_val(<<"key">>, Req),
+    ...
+    {ValueOrDefault, Req1} = cowboy_http_req:qs_val(<<"key">>, Req, DefautVal),
+```
+
+### Postデータの取得
+
+postしたデータはcowboy_http_req:body_qs/1で取得できます。
+データはproplistsで返ってきます。
+
+```erlang
+handle(Req, State) ->
+    {QsList, Req1} = cowboy_http_req:body_qs(Req),
+    case lists:keyfind(<<"key">>, 1, QsList) of
+        false ->
+            ...,
+        {<<"key">>, Value} ->
+            ....
+```
+
+## Cookie操作
+
+cookieの操作も同様にcowboy_http_req:cookie/2, set_resp_cookie/3を使います。
+
+### Cookieの取得
+```erlang
+handle(Req, State) ->
+    case cowboy_http_req:cookie(Key, Req) of
+        {undefined, Req1} ->
+            ...
+        {SessionId, Req1} ->
+            ...
+```
+
+### Cookieのセット
+
+```erlang
+handle(Req, State) ->
+    {ok,  Req1} = cowboy_http_req:set_resp_cookie(<<"Key">>, <<"Value">>, [max_age, 1000],  Req),
+    ...
+```
+
+## 静的ファイルの処理(cowboy\_http\_static)
+
+静的ファイルをレスポンスに利用する場合、
+cowboy_http_staticが用意されているので、これを使います。
+
+**cowboy_http_staticは2012/05/07現在experimentalです。**
+
+### Dispatch設定
+
+cowboyのlistener起動時に指定するdispatcher設定でcowboy_http_staticをhandlerとして指定します。
+そしてOptionにdirectory, mimetypsを指定します。
+
+下記の例では/static/xxxへのアクセスに対してcowboy_http_staticが使用されます。
+
+```erlang
+Dispatch = [
+    {'_', [
+        {[<<"static">>, '...'], cowboy_http_static, [
+                {directory, {priv_dir, application_name, [<<"www">>]}},
+                {mimetypes, [
+                        {<<".html">>, [<<"text/html">>]},
+                        {<<".css">>,  [<<"text/css">>]},
+                        {<<".js">>,   [<<"application/javascript">>]}]]}]},
+        ...
+```
+
+### directoryオプション
+静的ファイルのルートディレクトリ。priv_dirを指定すると指定したアプリケーションのprivディレクトリが参照されます。
+直接ディレクトリを指定することも可能です。
+
+以下、cowboy_http_staticのedocより
+```erlang
+  %% Serve files from /var/www/ under http://example.com/static/
+  {[<<"static">>, '...'], cowboy_http_static,
+      [{directory, "/var/www"}]}
+
+  %% Serve files from the current working directory under http://example.com/static/
+  {[<<"static">>, '...'], cowboy_http_static,
+      [{directory, <<"./">>}]}
+
+  %% Serve files from cowboy/priv/www under http://example.com/
+  {['...'], cowboy_http_static,
+      [{directory, {priv_dir, cowboy, [<<"www">>]}}]}
+```
+
+### mimetypesオプション
+静的ファイルの拡張子毎にConten-Typeを指定します。
+
+Content-Typeのデフォルト値が*application/octet-stream*になっているので、
+適切な値を設定する必要があります。
+
+[spawngrid/mimetypes](https://github.com/spawngrid/mimetypes)を使うことでmimetypesを、
+以下の様にも書ける様です。(未検証)
+
+```erlang
+{mimetypes, {fun mimetypes:path_to_mimes/2, default}}
+```
