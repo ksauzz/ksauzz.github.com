@@ -31,11 +31,26 @@ Linuxへのインストール手順のまとめが見当たらなかったので
     git clone git://github.com/sstephenson/rbenv.git .rbenv
 
 シェルの設定(zsh)
+
     echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.zshrc
     echo 'eval "$(rbenv init -)"' >> ~/.zshrc
     source ~/.zshrc
 
 *bashの場合は ~/.bash_profileへ設定する.*
+
+### system wide install
+
+System wideでインストールする場合には /usr/local/rbenv へインストールします。
+
+    cd /usr/local
+    git clone git://github.com/sstephenson/rbenv.git
+
+初期設定は /etc/profile.d/rbenv.sh へいれます。
+
+    echo 'export PATH="/usr/local/rbenv/bin:$PATH"' >> /etc/profile.d/rbenv.sh
+    echo 'eval "$(rbenv init -)"' >> /etc/profile.d/rbenv.sh
+
+参考：[shared-install-of-rbenv](https://github.com/sstephenson/rbenv/wiki/shared-install-of-rbenv)
 
 ### trouble shoot
 
