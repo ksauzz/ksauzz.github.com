@@ -13,8 +13,8 @@ Homebrewはデフォルトで /usr/local へインストールされるが、
 
     cd /usr/local
     sudo git clone git://github.com/mxcl/homebrew.git homebrew
-    sudo chgrp -R staff homebrew bin include lib
-    sudo chmod -R 775 homebrew bin include lib
+    sudo chgrp -R staff homebrew bin include lib etc var
+    sudo chmod -R 775 homebrew bin include lib etc var
     ln -s /usr/local/homebrew/bin/brew /usr/local/bin/brew
 
 MANPATHを通しておく(.zshenv)
