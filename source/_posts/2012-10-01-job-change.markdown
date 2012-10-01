@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "退職しました"
-date: 2012-10-01 19:06
+date: 2012-10-01 20:05
 comments: true
 categories: job
 ---
