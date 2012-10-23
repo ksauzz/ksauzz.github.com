@@ -13,9 +13,15 @@ OSXへErlangをソースからいれた時のメモ。
     cd otp
     git checkout -b OTP_R15B02 OTP_R15B02
     ./otp_build autoconf
-    ./otp_build configure --enable-hipe --enable-smp-support --enable-threads --enable-kernel-poll --enable-darwin-64bit --prefix=/usr/local/erlang/OTP_R15B02
+    ./otp_build configure --disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll  --enable-darwin-64bit --prefix=/usr/local/erlang/OTP_R15B02
     make && make install
 
 PREFIXはお好みで。
 
 あとは適当にPATHとか足しとく
+
+#### DTrace support
+
+```
+./otp_build configure --enable-dtrace --disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll  --enable-darwin-64bit --prefix=/usr/local/erlang/OTP_R15B02
+```
