@@ -1,12 +1,12 @@
 ---
 layout: post
-title: "Octopressブログの別マシンにおけるセットアップ手順"
+title: "Octopressを別マシンでセットアップ"
 date: 2012-10-11 19:29
 comments: true
 categories: octopress
 ---
 
-わかるとは思いますが、このブログはOctopressで作られています。
+ご覧のとおり、このブログはOctopressを使っています。
 最近、新しいマシンでブログを書こうとしたら、`rake deploy`が上手く動かなかったよという話。
 `git clone`しただけではダメみたいです。
 
@@ -19,13 +19,13 @@ categories: octopress
 
 要するに`rake setup_github_pages`しとけという話です。
 
-１は必須ではないと思いますが、やっとくと楽でしょう。
+１は必須ではないと思いますが、やっとくと楽です。
 これで無事デプロイできるようになりました。ってまぁ、このエントリが公開されてることがその証明なわけです。
 
 原因はデプロイ用の`_deploy`ディレクトリがorigin/masterに紐付いてなかったこと。
 
 Rakefileを見ればわかりますが、`setup_github_pages`の役割は元のoctopressのリポジトリをどけるだけでなく、
-ローカルリポジトリの`_deploy`ディレクトリを`master`ブランチに関連付ける役割もあったということです。
+ローカルリポジトリの`_deploy`ディレクトリを`master`ブランチに関連付ける役割もありました。
 
 まぁ、そんだけです。
 
