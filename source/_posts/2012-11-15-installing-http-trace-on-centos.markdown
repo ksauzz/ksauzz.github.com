@@ -3,7 +3,7 @@ layout: post
 title: "Installing http\_trace on CentOS"
 date: 2012-11-15 11:56
 comments: true
-categories: http, tool
+categories: http tool
 ---
 
 コピペ用
