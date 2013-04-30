@@ -17,6 +17,7 @@ redbugで出来る事
   - 戻り値の確認
   - コールスタックの確認
 
+
 Riakでの実行例
 
 ```
@@ -40,6 +41,10 @@ ok
 20:17:34 <{riak_kv_put_fsm,init,1}> {riak_kv_vnode,put,6} -> ok
 quitting: msg_count
 ```
+
+動作確認環境
+
+`OSX 10.8.3 R15B03`, `CentOS 6.3 R15B01`
 
 ## 導入方法
 
