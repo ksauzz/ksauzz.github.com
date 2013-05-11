@@ -1,5 +1,12 @@
 // This File is imported last, and will override other styles in the cascade
 // Add styles here to make changes without digging in too much
+html {
+  background: image-url('bg-dark.jpg');
+  background-position: top right;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: 100% auto;
+}
 article {
   font-size: .85em;
   margin-bottom: 1em;
