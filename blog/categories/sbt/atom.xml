@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: sbt | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/sbt/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[sbt]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/04/07/sbt-usage/"/>
+    <updated>2012-04-07T15:00:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/04/07/sbt-usage</id>
+    <content type="html"><![CDATA[<p>簡単にメモ</p>
+
+<h2><a href="https://github.com/harrah/xsbt/wiki">simple build tool (version 0.11.x)</a></h2>
+
+<p>scalaのビルドツール。
+最近のバージョンでは基本的に対話モードで利用する雰囲気。</p>
+
+<h2>よく使うコマンド</h2>
+
+<table>
+<thead>
+<tr>
+<th>コマンド名               </th>
+<th> 説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>update                   </td>
+<td> ライブラリ(dependenciew)取得</td>
+</tr>
+<tr>
+<td>clean                    </td>
+<td> cleanup target directories</td>
+</tr>
+<tr>
+<td>run                      </td>
+<td> main classの検索、一覧表示からの実行</td>
+</tr>
+<tr>
+<td>run-main <em>classname</em> 　  </td>
+<td> main classを明示的に指定して実行</td>
+</tr>
+<tr>
+<td>console                  </td>
+<td> scalaの対話型コンソール起動。:quitでconsoleから抜ける</td>
+</tr>
+<tr>
+<td>tasks                    </td>
+<td> タスク一覧表示</td>
+</tr>
+<tr>
+<td>package                  </td>
+<td> パッケージ(jar)の生成</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>コマンドがよく分からなかったらtasksでコマンド一覧をながめて、help引いて使えばなんとかなる。</p>
+
+<h2>usage</h2>
+
+<ol>
+<li>sbtを起動(基本起動させっぱなし)</li>
+<li>consoleコマンドでREPL起動。コードの動作を確認しつつ、別windowで編集(vim)</li>
+<li>書いたらcompileでビルド</li>
+<li>run、もしくはrun-mainで実行</li>
+</ol>
+
+
+<p>という雰囲気で使ってる。</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: octopress | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/octopress/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Octopressを別マシンでセットアップ]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/10/11/octopress-on-another-machine/"/>
+    <updated>2012-10-11T19:29:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/10/11/octopress-on-another-machine</id>
+    <content type="html"><![CDATA[<p>ご覧のとおり、このブログはOctopressを使っています。
+最近、新しいマシンでブログを書こうとしたら、<code>rake deploy</code>が上手く動かなかったよという話。
+<code>git clone</code>しただけではダメみたいです。</p>
+
+<p>ちなみにOctopressのverisionは2.0</p>
+
+<h4>手順</h4>
+
+<ol>
+<li>github上でデフォルトのブランチをsourceにする。</li>
+<li><code>git clone</code></li>
+<li><code>rake setup_github_pages</code></li>
+</ol>
+
+
+<p>要するに<code>rake setup_github_pages</code>しとけという話です。</p>
+
+<p>１は必須ではないと思いますが、やっとくと楽です。
+これで無事デプロイできるようになりました。ってまぁ、このエントリが公開されてることがその証明なわけです。</p>
+
+<p>原因はデプロイ用の<code>_deploy</code>ディレクトリがorigin/masterに紐付いてなかったこと。</p>
+
+<p>Rakefileを見ればわかりますが、<code>setup_github_pages</code>の役割は元のoctopressのリポジトリをどけるだけでなく、
+ローカルリポジトリの<code>_deploy</code>ディレクトリを<code>master</code>ブランチに関連付ける役割もありました。</p>
+
+<p>まぁ、そんだけです。</p>
+
+<h3>※追記</h3>
+
+<p>どうやらmasterブランチの歴史が書き換わる（初期化される）ので、
+それが嫌なら自力で<code>_deploy</code>ディレクトリをセットアップするしかなさそうですね。</p>
+]]></content>
+  </entry>
+  
+</feed>

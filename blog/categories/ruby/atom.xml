@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ruby | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/ruby/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[ひとりでやる(?)Riak Advent Calendar 2012 day7 - Ruby Clientで遊んでみよう ]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/12/12/riak-advent-calendar-2013-07/"/>
+    <updated>2012-12-12T23:29:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/12/12/riak-advent-calendar-2013-07</id>
+    <content type="html"><![CDATA[<p>ということでRiakのRubyライブラリをご紹介。RiakのProtocol Buffer/HTTPクライアントであるriak-ruby-clientとObject MapperであるRippleの２本立てです。Rippleに関してはRailsへの導入方法を簡単に説明します。</p>
+
+<ul>
+<li>riak-ruby-clientの使い方</li>
+<li>RailsへRippleを導入する</li>
+</ul>
+
+
+<h2><a href="https://github.com/basho/riak-ruby-client">riak-ruby-client</a>の使い方</h2>
+
+<h3>インストール</h3>
+
+<p>gemでサクッとインストールします。</p>
+
+<p><code>
+% gem install riak-client
+Successfully installed riak-client-1.1.0
+1 gem installed
+</code></p>
+
+<h3>利用方法</h3>
+
+<h4>1. Clientの生成</h4>
+
+<p>Procotol Bufferを使うか、HTTPを使うかをnewするときに指定できます。</p>
+
+<h5>1.1. HTTP</h5>
+
+<p><code>ruby
+require 'riak'
+client = Riak::Client.new
+</code></p>
+
+<h5>1.2. Protocol Buffer</h5>
+
+<p><code>ruby
+require 'riak'
+client = Riak::Client.new(:protocol =&gt; "pbc")
+</code></p>
+
+<h5>1.3. 複数ノードへの接続</h5>
+
+<p><code>ruby
+require 'riak'
+client = Riak::Client.new(:nodes =&gt; [
+  {:host =&gt; '10.0.0.1'},
+  {:host =&gt; '10.0.0.2', :pb_port =&gt; 7070},
+  {:host =&gt; '10.0.0.3', :http_port =&gt; 8080}
+])
+</code></p>
+
+<h4>2. Objectを保存する</h4>
+
+<p>生成したclientを使ってObjectを保存します。
+やり方が３パターンほどあるので、それぞれサンプルをご紹介。
+Riak::RObjectの生成方法が違うだけでやっていることは同じです。</p>
+
+<h5>2.1 シンプルに使う</h5>
+
+<p><code>ruby
+bucket = client.bucket("doc")
+object = bucket.get_or_new("index.html")
+object.raw_data = "&lt;html&gt;&lt;body&gt;Hello, world!&lt;/body&gt;&lt;/html&gt;"
+object.content_type = "text/html"
+object.store
+</code></p>
+
+<h5>2.2 Riak::RObjectを明示的に利用</h5>
+
+<p><code>ruby
+bucket = client.bucket("doc")
+new_one = Riak::RObject.new(bucket, "index2.html")
+object.raw_data = "&lt;html&gt;&lt;body&gt;Hello, world!&lt;/body&gt;&lt;/html&gt;"
+object.content_type = "text/html"
+object.store
+</code></p>
+
+<h5>2.3 ハッシュを使って</h5>
+
+<p><code>ruby
+object = client['doc']['index.html']
+object.raw_data = "&lt;html&gt;&lt;body&gt;Hello, world!&lt;/body&gt;&lt;/html&gt;"
+object.content_type = "text/html"
+object.store
+</code></p>
+
+<p>保存したデータを<a href="https://github.com/jkbr/httpie">httpie</a>で確認してみます。</p>
+
+<p>```
+% http localhost:8098/buckets/doc/keys/index.html
+HTTP/1.1 200 OK
+Content-Length: 39
+Content-Type: text/html; charset=UTF-8
+Date: Wed, 12 Dec 2012 16:55:44 GMT
+ETag: "44tAJLzAUJTa20TtR8s5fJ"
+Last-Modified: Wed, 12 Dec 2012 14:53:48 GMT
+Link: </buckets/doc>; rel="up"
+Server: MochiWeb/1.1 WebMachine/1.9.0 (someone had painted it blue)
+Vary: Accept-Encoding
+X-Riak-Vclock: a85hYGBgzGDKBVIcypz/fgacmLY0gymRKY+VoUbM9hRfFgA=</p>
+
+<p><html><body>Hello, world!</body></html>
+```</p>
+
+<p>はい、確認できました。
+簡単ですがriak-ruby-clientの紹介はここまで。</p>
+
+<h2>RailsへRippleを導入する</h2>
+
+<p><a href="https://github.com/basho/ripple">Ripple</a> - A rich Ruby modeling layer for Riak -</p>
+
+<p>RippleはRiakのデータをオブジェクトにマッピングしてくれるライブラリです。ActiveRecordライクに利用できます。
+Riakを使ってアプリケーションを作る際には、基本的にRippleやそれに類似したライブラリを使うことになる筈です。</p>
+
+<p>それではRailsへRippleを導入する方法を簡単に紹介します。</p>
+
+<p>なお、このサンプルではRails 3.2.8を使用しています。</p>
+
+<h4>1. Railsアプリケーションの生成</h4>
+
+<p><code>rails new</code>でアプリケーションを生成します</p>
+
+<p>```
+% rails new ripple-example</p>
+
+<pre><code>  create
+  create  README.rdoc
+  create  Rakefile
+  create  config.ru
+</code></pre>
+
+<p>...
+% cd ripple-example
+```</p>
+
+<h4>2. rippleをdependenciesへ追加</h4>
+
+<p>Gemfileに以下を追加します。
+Railsの3.2.8を使っているのでrippleは1.0.0.beta2を使います。</p>
+
+<p><code>
+gem "ripple", "~&gt;1.0.0.beta2"
+</code></p>
+
+<p>bundle installします。</p>
+
+<p><code>
+bundle install
+</code></p>
+
+<h4>3. セットアップ</h4>
+
+<p><code>rails g ripple</code>します。</p>
+
+<p>```
+% rails g ripple</p>
+
+<pre><code>  create  config/ripple.yml
+  create  app/mapreduce
+  create  app/mapreduce/contrib.js
+  create  app/mapreduce/iso8601.js
+  create  app/mapreduce/ripple.js
+  insert  test/test_helper.rb
+  insert  test/test_helper.rb
+</code></pre>
+
+<p>```</p>
+
+<p>config/ripple.ymlを編集してRiakの設定を自分の環境に合わせます。
+sourceにはローカルのriakコマンドがインストールされているパスを設定してください。</p>
+
+<p><code>
+development:
+  http_port: 8098
+  pb_port: 8087
+  host: 127.0.0.1
+  source: /usr/local/bin  #Default for Homebrew.
+</code></p>
+
+<p>それでは試しにmodelを生成します。
+propertiesとしてname, ageを指定してみました。</p>
+
+<p>```
+% rails g ripple:model User name:string age:integer</p>
+
+<pre><code>  create  app/models/user.rb
+  invoke  test_unit
+  create    test/unit/user_test.rb
+  create    test/fixtures/users.yml
+</code></pre>
+
+<p>```</p>
+
+<p>生成したModelはこんな感じになります。</p>
+
+<p>```ruby
+class User
+  include Ripple::Document</p>
+
+<p>  property :name, String
+  property :age, Integer
+end</p>
+
+<p>```</p>
+
+<h4>4. 動作確認</h4>
+
+<p>consoleで動作確認してみます。
+まずはデータを保存。</p>
+
+<p><code>
+% rails console
+Loading development environment (Rails 3.2.8)
+irb(main):001:0&gt; user = User.new
+=&gt; &lt;User:[new] name=nil age=nil&gt;
+irb(main):002:0&gt; user.name = 'たろう'
+=&gt; "たろう"
+irb(main):003:0&gt; user.age = 18
+=&gt; 18
+irb(main):004:0&gt; user.save
+=&gt; true
+irb(main):005:0&gt; user.key
+=&gt; "QB4nWCL1SpvCe5csclOUgmNX7XN"
+</code></p>
+
+<p>保存後に取得したkeyの値がオブジェクトのIDとなります。
+このIDを使ってデータが保存されたか確認してみます。</p>
+
+<p><code>
+irb(main):006:0&gt; User.find "QB4nWCL1SpvCe5csclOUgmNX7XN"
+=&gt; &lt;User:QB4nWCL1SpvCe5csclOUgmNX7XN name="たろう" age=18&gt;
+</code></p>
+
+<p>はい、保存されていますね。</p>
+
+<p>なお、オブジェクトのID(riakのkey名)は、以下の<code>key\_on</code>をModel内で指定する事により、
+自動生成された値でなく、特定のproperyを使用することができます。
+下記の例だとkey_nameというpropertyがriakのkey名に使われます。</p>
+
+<p><code>
+key_on :key_name # use :key_name as key name.
+</code></p>
+
+<p>こんな感じでRiak+Railsのアプリケーションを作って遊んでみてはいかがでしょうか。
+今日はここまで。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[ZeroMQ Rubyバインディングのインストール]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/06/02/zmq-ruby-setup/"/>
+    <updated>2012-06-02T18:34:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/06/02/zmq-ruby-setup</id>
+    <content type="html"><![CDATA[<p>そろそろ<a href="http://www.zeromq.org/">ZeroMQ</a>を触ろうか、ということでRubyバインディングをとりあえずインストール。</p>
+
+<p>ZeroMQのRubyバインディングは<a href="https://github.com/zeromq/rbzmq">rbzmq</a>と<a href="https://github.com/chuckremes/ffi-rzmq">ffi-rzmq</a>があります。
+rbzmqは公式のRubyバインディングでffi-rzmqは<a href="http://www.slideshare.net/copiousfreetime/ffi-building-cross-engine-ruby-extensions">ffi</a>版です。
+ffiに関しては、さっぱり詳しくないのですが、
+MatzRuby使ってる分には基本rbzmqの方で良いのかなと思ってます。
+ffi-rzmqをインストールしたのは<a href="https://github.com/andrewvc/learn-ruby-zeromq">learn-ruby-zeromq</a>を動かしたかった、というだけの理由です。</p>
+
+<p>以下、MacOSでのお話…。</p>
+
+<h2>ZeroMQのインストール</h2>
+
+<p>とりあえずZeroMQをインストールします。
+特になにも考えず現在のStable版である2.2.0を入れました。
+今回はソースビルドしていて、インストール先は/usr/local/zmqです。</p>
+
+<pre><code>git clone https://github.com/zeromq/zeromq2-x.git
+cd zeromq2-x
+git checkout v2.2.0
+./autogen.sh
+./configure --prefix=/usr/local/zmq
+make
+sudo make install
+</code></pre>
+
+<h2>rbzmqのインストール</h2>
+
+<p>--with-zmq-dirでインストールパスを指定します。</p>
+
+<pre><code>gem install zmq -- --with-zmq-dir=/usr/local/zmq
+</code></pre>
+
+<h2>ffi-rzmqのインストール</h2>
+
+<pre><code>gem install ffi-rzmq
+
+echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/zmq/lib" &gt;&gt; ~/.zshrc
+</code></pre>
+
+<p>/usr/local/zmqへインストールしたので、LD_LIBRARY_PATHの指定をしておかないと実行時にコケます。</p>
+
+<p>インストール作業は以上。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[rbenv ruby-build rbenv-gemsetのセットアップ]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/03/23/rbenv-ruby-build-rbenv-gemset/"/>
+    <updated>2012-03-23T21:53:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/03/23/rbenv-ruby-build-rbenv-gemset</id>
+    <content type="html"><![CDATA[<p>近頃、RVMはオワコン呼ばわりされているので、rbenvを使ってます。
+Linuxへのインストール手順のまとめが見当たらなかったのでまとめておきます。</p>
+
+<h1>MacOS</h1>
+
+<pre><code>sudo brew install rbenv ruby-build rbenv-gemset
+</code></pre>
+
+<h2>rbenv with homebrew's readline</h2>
+
+<p>参考： <a href="http://blog.twiwt.org/e/66a1d0">http://blog.twiwt.org/e/66a1d0</a></p>
+
+<pre><code>brew install readline
+brew link readline
+CONFIGURE_OPTS="--with-readline-dir=/usr/local" rbenv install 1.9.2-p290
+</code></pre>
+
+<h1>Linux</h1>
+
+<h2>install rbenv</h2>
+
+<p>ダウンロード</p>
+
+<pre><code>cd
+git clone git://github.com/sstephenson/rbenv.git .rbenv
+</code></pre>
+
+<p>シェルの設定(zsh)</p>
+
+<pre><code>echo 'export PATH="$HOME/.rbenv/bin:$PATH"' &gt;&gt; ~/.zshrc
+echo 'eval "$(rbenv init -)"' &gt;&gt; ~/.zshrc
+source ~/.zshrc
+</code></pre>
+
+<p><em>bashの場合は ~/.bash_profileへ設定する.</em></p>
+
+<h3>system wide install</h3>
+
+<p>System wideでインストールする場合には /usr/local/rbenv へインストールします。</p>
+
+<pre><code>cd /usr/local
+git clone git://github.com/sstephenson/rbenv.git
+</code></pre>
+
+<p>初期設定は /etc/profile.d/rbenv.sh へいれます。</p>
+
+<pre><code>echo 'export PATH="/usr/local/rbenv/bin:$PATH"' &gt;&gt; /etc/profile.d/rbenv.sh
+echo 'eval "$(rbenv init -)"' &gt;&gt; /etc/profile.d/rbenv.sh
+</code></pre>
+
+<p>参考：<a href="https://github.com/sstephenson/rbenv/wiki/shared-install-of-rbenv">shared-install-of-rbenv</a></p>
+
+<h3>trouble shoot</h3>
+
+<p>シェル初期化時に以下のエラーが発生することがある。</p>
+
+<pre><code>$HOME/.rbenv/libexec/../completions/rbenv.bash:14: command not found: complete
+</code></pre>
+
+<p>この場合、.zshrcの設定を以下に変更</p>
+
+<pre><code>eval "$(rbenv init - zsh)"
+</code></pre>
+
+<h2>install ruby-build</h2>
+
+<pre><code>mkdir -p ~/.rbenv/plugins
+cd ~/.rbenv/plugins
+git clone git://github.com/sstephenson/ruby-build.git
+</code></pre>
+
+<h2>install rbenv-gemset</h2>
+
+<pre><code>mkdir -p ~/.rbenv/plugins
+cd ~/.rbenv/plugins
+git clone git://github.com/jamis/rbenv-gemset.git
+</code></pre>
+
+<h1>Usage</h1>
+
+<h2>install ruby</h2>
+
+<pre><code>rbenv install 1.9.2-p290
+rbenv global 1.9.2-p290
+rbenv rehash
+</code></pre>
+
+<h2>freeze ruby version</h2>
+
+<pre><code>cd your-project-dir
+rbenv local 1.9.2-p290
+</code></pre>
+
+<h2>make my gemset</h2>
+
+<pre><code>cd your-project-dir
+rbenv gemset create 1.9.2-p290 my-gemset 
+echo my-gemset &gt; .rbenv-gemsets
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: git | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/git/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[gitメモ]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/05/02/gitmemo/"/>
+    <updated>2012-05-02T23:29:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/05/02/gitmemo</id>
+    <content type="html"><![CDATA[<p>Gitのメモ
+git-svnがメインかも…</p>
+
+<h1>git svn</h1>
+
+<table>
+<thead>
+<tr>
+<th> 説明                                     </th>
+<th> コマンド</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> 標準ディレクトリ構成にてクローン         </td>
+<td>  git svn clone -s --prefix=svn/ <em>url</em></td>
+</tr>
+<tr>
+<td> clone時のリビジョン指定(depth)           </td>
+<td>  git svn clone -s --prefix=svn/ -r $REV:HEAD <em>url</em></td>
+</tr>
+<tr>
+<td> svnの変更に追従                          </td>
+<td>  git svn rebase</td>
+</tr>
+<tr>
+<td> svnへコミット                            </td>
+<td>  git svn dcommit</td>
+</tr>
+<tr>
+<td> svnリポジトリの変更を取得                </td>
+<td>  git svn fetch svn</td>
+</tr>
+<tr>
+<td> svn側にブランチ作成                      </td>
+<td>  git svn branch <em>branch</em></td>
+</tr>
+<tr>
+<td> svn側にタグ打ち                          </td>
+<td>  git svn tag <em>version</em> (-n dry-run)</td>
+</tr>
+<tr>
+<td> svnブランチに紐付くローカルブランチの作成</td>
+<td>  git branch <em>local-branch</em> <em>remotes/svn/branch</em></td>
+</tr>
+<tr>
+<td>                                          </td>
+<td>  git checkout -b <em>local-branch</em> <em>remotes/svn/branch</em></td>
+</tr>
+</tbody>
+</table>
+
+
+<h2>merge時の注意</h2>
+
+<p>svnブランチを参照しているブランチからmergeするときは<code>--no-ff</code>オプションを使うこと。fast-fowardだとremoteブランチが切り替わる。
+誤って実行した場合はreset等で対処。</p>
+
+<h2>ローカルブランチのコミットを履歴を維持したままsvnブランチへコミットする</h2>
+
+<pre><code>git branch local_branch
+// edit &amp; commit
+git svn branch remote_branch
+git checkout -b svn_sync_branch remotes/svn/remote_branch
+git rebase svn_sync_branch
+git svn dcommit
+</code></pre>
+
+<h1>git flow</h1>
+
+<ul>
+<li><a href="https://github.com/nvie/gitflow">git plugin</a></li>
+<li><a href="http://nvie.com/posts/a-successful-git-branching-model/">A successful git branching model.</a></li>
+<li><a href="http://keijinsonyaban.blogspot.jp/2010/10/successful-git-branching-model.html">日本語訳</a></li>
+</ul>
+
+
+<h2>既存プロジェクトの初期化</h2>
+
+<pre><code>git clone url
+git checkout --track origin/master
+git flow init
+</code></pre>
+
+<p>これをしないとdevelopの変更がlocalのmasterに入ってしまう。</p>
+
+<h2>featureコマンド</h2>
+
+<table>
+<thead>
+<tr>
+<th> 説明                                   </th>
+<th> コマンド</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> featureブランチ作成                    </td>
+<td>  git flow feature start <em>branch</em></td>
+</tr>
+<tr>
+<td> featureブランチ終了(developへのmerge)  </td>
+<td>  git flow feature finish <em>branch</em></td>
+</tr>
+<tr>
+<td> featureブランチをpush                  </td>
+<td>  git flow feature publish <em>branch</em></td>
+</tr>
+<tr>
+<td> featureブランチのpull                  </td>
+<td>  git flow feature pull origin <em>branch</em></td>
+</tr>
+</tbody>
+</table>
+
+
+<h1>その他</h1>
+
+<h2>commit</h2>
+
+<pre><code>git commit -m msg
+git commit --amend
+</code></pre>
+
+<h2>checkout</h2>
+
+<pre><code>git checkout -b branch_name
+git checkout -b branch_name origin/branch
+</code></pre>
+
+<h2>rm</h2>
+
+<p>remove from index</p>
+
+<pre><code>git rm --cached item
+</code></pre>
+
+<h2>reset</h2>
+
+<pre><code>git reset .
+git reset --soft HEAD^
+git reset --hard HEAD^
+</code></pre>
+
+<h2>rebase</h2>
+
+<pre><code>rebase -i HEAD^^^
+rebase --onto base_branch current_branch branch
+</code></pre>
+
+<h2>git reflog</h2>
+
+<table>
+<thead>
+<tr>
+<th>説明                 </th>
+<th> コマンド</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>rebase前の情報を取得 </td>
+<td>  git reflog show <em>branch</em></td>
+</tr>
+</tbody>
+</table>
+
+
+<h2>git clean</h2>
+
+<table>
+<thead>
+<tr>
+<th> 説明               </th>
+<th> コマンド</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td> .gitignoreを無視   </td>
+<td>   git clean -x</td>
+</tr>
+<tr>
+<td> ディレクトリも削除 </td>
+<td>   git clean -d</td>
+</tr>
+</tbody>
+</table>
+
+
+<h2>change author and commiter</h2>
+
+<pre><code>git filter-branch --commit-filter '
+if [ "$GIT_COMMITTER_NAME" = "old_name" ]; then
+    GIT_AUTHOR_NAME="new_author_name"
+    GIT_AUTHOR_EMAIL="new_author_email"
+    GIT_COMMITTER_NAME="new_comitter_name"
+    GIT_COMMITTER_EMAIL="new_commiter_email"
+fi
+git commit-tree "$@"
+' HEAD
+</code></pre>
+
+<p>参考：<a href="http://d.hatena.ne.jp/idesaku/20090908/1252419890">http://d.hatena.ne.jp/idesaku/20090908/1252419890</a></p>
+]]></content>
+  </entry>
+  
+</feed>

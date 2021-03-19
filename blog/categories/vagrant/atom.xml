@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: vagrant | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/vagrant/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Vagrantメモ]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/11/19/how-to-use-vagrant/"/>
+    <updated>2012-11-19T01:09:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/11/19/how-to-use-vagrant</id>
+    <content type="html"><![CDATA[<h3>create vagrant box using veewee.</h3>
+
+<p>```
+$ vagrant basebox templates
+The following templates are available:
+vagrant basebox define '<boxname>' 'CentOS-4.8-i386'
+vagrant basebox define '<boxname>' 'CentOS-5.5-i386-netboot'
+vagrant basebox define '<boxname>' 'CentOS-5.5-x86_64-netboot'
+vagrant basebox define '<boxname>' 'CentOS-5.6-i386'
+vagrant basebox define '<boxname>' 'CentOS-5.6-i386-netboot'
+...
+$ vagrant basebox define 'CentOS-6.2-x86_64-minimal'  'CentOS-6.2-x86_64-minimal'</p>
+
+<p>  <em>customizing definitions</em></p>
+
+<p>$ vagrant basebox build CentOS-6.2-x86_64-minimal
+$ vagrant basebox export CentOS-6.2-x86_64-minimal
+$ vagrant box add CentOS-6.2-x86_64-minimal CentOS-6.2-x86_64-minimal.box
+```</p>
+
+<h3>create and connect to VM.</h3>
+
+<p><code>
+$ vagrant init CentOS-6.2-x86_64-minimal
+$ vagrant up
+$ vagrant ssh
+</code></p>
+
+<h3>no-provision</h3>
+
+<p><code>
+vagrant up --no-provision
+</code></p>
+
+<h3>debugging</h3>
+
+<p>verbose logging.
+<code>
+VAGRANT_LOG=INFO vagrant up
+</code></p>
+
+<p>check console with gui mode.
+<code>
+config.vm.boot_mode = :gui
+</code></p>
+
+<h3>default account</h3>
+
+<p>id/pass</p>
+
+<p><code>
+vagrant/vagrant
+root/vagrant
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>

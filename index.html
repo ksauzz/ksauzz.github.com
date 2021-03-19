@@ -1,1 +1,1715 @@
-My Octopress Page is coming soon &hellip;
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>ksauzz weblog</title>
+  <meta name="author" content="ksauzz">
+
+  
+  <meta name="description" content="redbugはErlangコードのトレースに使用するデバッグ用ツールです。 eper というパフォーマンス関連ツールの一部として配布されています。
+これを使うと、指定した関数のトレースがとても手軽に行えます。 redbugで出来る事 モジュール名、関数名、引数でのトレース対象指定(ワイルドカード可 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ksauzz.github.com">
+  <link href="/favicon.ico" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="ksauzz weblog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-29777654-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">ksauzz weblog</a></h1>
+  
+    <h2>technical note....</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:ksauzz.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="http://about.me/ksauzz">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/30/redbug/">Erlangのデバッグツール Redbug</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-30T23:40:00+09:00" pubdate data-updated="true">2013-04-30 23:40</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><em>redbug</em>はErlangコードのトレースに使用するデバッグ用ツールです。
+ <a href="https://code.google.com/p/eper/">eper</a> というパフォーマンス関連ツールの一部として配布されています。
+これを使うと、指定した関数のトレースがとても手軽に行えます。</p>
+
+<p>redbugで出来る事</p>
+
+<ul>
+<li>モジュール名、関数名、引数でのトレース対象指定(ワイルドカード可)</li>
+<li>引数の確認</li>
+<li>戻り値の確認</li>
+<li>コールスタックの確認</li>
+</ul>
+
+
+<p>Riakでの実行例</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>(riak1@127.0.0.1)81&gt; redbug:start({riak_kv_vnode, put,[return, stack]},[{time,5000},{msgs,4},{max_msg_size,10000
+</span><span class='line'>000},{print_depth,10}]).
+</span><span class='line'>ok
+</span><span class='line'>
+</span><span class='line'>20:17:34 &lt;{riak_kv_put_fsm,init,1}&gt; {riak_kv_vnode,put,
+</span><span class='line'>                                     [[{685078892498860742907977265335757665463718379520,
+</span><span class='line'>                                        'riak1@127.0.0.1'},
+</span><span class='line'>                                       {707914855582156101004909840846949587645842325504,
+</span><span class='line'>                                        'riak1@127.0.0.1'}],
+</span><span class='line'>                                      {&lt;&lt;"bucket"&gt;&gt;,&lt;&lt;"key1"&gt;&gt;},
+</span><span class='line'>                                      {r_object,&lt;&lt;"buck"...&gt;&gt;,&lt;&lt;...&gt;&gt;,...},
+</span><span class='line'>                                      87431492,63534539854,[]]}
+</span><span class='line'>  "proc_lib:init_p_do_apply/3 "
+</span><span class='line'>  "gen_fsm:handle_msg/7 "
+</span><span class='line'>
+</span><span class='line'>.. 略 ..
+</span><span class='line'>
+</span><span class='line'>20:17:34 &lt;{riak_kv_put_fsm,init,1}&gt; {riak_kv_vnode,put,6} -&gt; ok
+</span><span class='line'>quitting: msg_count</span></code></pre></td></tr></table></div></figure>
+
+
+<p>動作確認環境</p>
+
+<p><code>OSX 10.8.3 R15B03</code>, <code>CentOS 6.3 R15B01</code></p>
+
+<h2>導入方法</h2>
+
+<p>rebarを使っていればrebar.configのdepsにeperを追加するだけです。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="p">{</span><span class="n">deps</span><span class="p">,</span> <span class="p">[</span>
+</span><span class='line'>        <span class="p">{</span><span class="n">eper</span><span class="p">,</span> <span class="s">&quot;0.61&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">git</span><span class="p">,</span> <span class="s">&quot;git://github.com/basho/eper.git&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">branch</span><span class="p">,</span> <span class="n">master</span><span class="p">}}}</span>
+</span><span class='line'>       <span class="p">]}.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>TODO: rebarを使わない方法</p>
+
+<h2>動作確認</h2>
+
+<p>sampleモジュールを例に、簡単に動作確認をしてみます。</p>
+
+<h3>1. erlの起動</h3>
+
+<p>まずはErlangシェルを起動します。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="c">% erl -pa ebin/ deps/*/ebin</span>
+</span><span class='line'><span class="nv">Erlang</span> <span class="nv">R15B03</span> <span class="p">(</span><span class="n">erts</span><span class="o">-</span><span class="mi">5</span><span class="p">.</span><span class="mi">9</span><span class="p">.</span><span class="mi">3</span><span class="p">.</span><span class="mi">1</span><span class="p">)</span> <span class="p">[</span><span class="n">source</span><span class="p">]</span> <span class="p">[</span><span class="mi">64</span><span class="o">-</span><span class="n">bit</span><span class="p">]</span> <span class="p">[</span><span class="nn">smp</span><span class="p">:</span><span class="mi">4</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="p">[</span><span class="n">async</span><span class="o">-</span><span class="nn">threads</span><span class="p">:</span><span class="mi">0</span><span class="p">]</span> <span class="p">[</span><span class="n">kernel</span><span class="o">-</span><span class="nn">poll</span><span class="p">:</span><span class="n">false</span><span class="p">]</span> <span class="p">[</span><span class="n">dtrace</span><span class="p">]</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">Eshell</span> <span class="nv">V5</span><span class="p">.</span><span class="mi">9</span><span class="p">.</span><span class="mi">3</span><span class="p">.</span><span class="mi">1</span>  <span class="p">(</span><span class="n">abort</span> <span class="n">with</span> <span class="err">^</span><span class="nv">G</span><span class="p">)</span>
+</span><span class='line'><span class="mi">1</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>2. redbugの起動</h3>
+
+<p><code>redbug:start/1</code>でトレース対象のモジュール名(sample)を指定し、redbugを起動します。
+<small>※15sec(default)でトレース処理が終了してしまうので気をつけましょう。 </small></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="mi">1</span><span class="o">&gt;</span> <span class="nn">redbug</span><span class="p">:</span><span class="n">start</span><span class="p">(</span><span class="n">sample</span><span class="p">).</span>
+</span><span class='line'><span class="n">ok</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>3. トレース対象のコードを実行</h3>
+
+<p>トレース対象のsampleモジュールを実行し、トレースの様子を確認します。
+<small>尚、ここで実行する<code>sample:start_link/0</code>は間接的に<code>sample:init/1</code>を呼び出すコードになっています。</small></p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="mi">2</span><span class="o">&gt;</span> <span class="nn">sample</span><span class="p">:</span><span class="n">start_link</span><span class="p">().</span>
+</span><span class='line'><span class="p">{</span><span class="n">ok</span><span class="p">,</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">.</span><span class="mi">41</span><span class="p">.</span><span class="mi">0</span><span class="o">&gt;</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>するとコンソールに次の内容が出力されます。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="mi">20</span><span class="p">:</span><span class="mi">43</span><span class="p">:</span><span class="mi">07</span> <span class="o">&lt;</span><span class="p">{</span><span class="n">erlang</span><span class="p">,</span><span class="nb">apply</span><span class="p">,</span><span class="mi">2</span><span class="p">}</span><span class="o">&gt;</span> <span class="p">{</span><span class="n">sample</span><span class="p">,</span><span class="n">start_link</span><span class="p">,[]}</span>
+</span><span class='line'>
+</span><span class='line'><span class="mi">20</span><span class="p">:</span><span class="mi">43</span><span class="p">:</span><span class="mi">07</span> <span class="o">&lt;</span><span class="n">sample</span><span class="o">&gt;</span> <span class="p">{</span><span class="n">sample</span><span class="p">,</span><span class="n">init</span><span class="p">,[[]]}</span>
+</span><span class='line'><span class="nn">quitting</span><span class="p">:</span> <span class="n">timeout</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>これがトレース結果です。簡単ですが<code>sample:start_link()</code>と<code>sample:init([])</code>がコールされた事が示されています。</p>
+
+<h2>使用例</h2>
+
+<p>redbugはトレース条件、オプションを指定することで様々なトレースを行うことができます。ここではその一部を紹介します。</p>
+
+<pre><code>Usage
+-----
+redbug:start(Trc)                %% トレース条件のみ指定
+redbug:start(Trc, Opts)          %% トレース条件, オプション指定
+redbug:start(Timeout, Msgs, Trc) %% トレース条件, タイムアウト, トレース数指定(オプション指定不能)
+</code></pre>
+
+<h3>サンプル</h3>
+
+<p>riak_kv_get_fsmモジュールの呼び出しをtrace</p>
+
+<pre><code>redbug:start(riak_kv_get_fsm).
+</code></pre>
+
+<p>riak_kv_get_fsm:initの呼び出しをtrace</p>
+
+<pre><code>redbug:start(riak_kv_get_fsm, init).
+or
+redbug:start({riak_kv_get_fsm, init}).
+</code></pre>
+
+<p>riak_kv_get_fsmの呼び出し、戻り値をtrace</p>
+
+<pre><code>redbug:start({riak_kv_get_fsm, '_', [return]}).
+</code></pre>
+
+<p>riak_kv_get_fsm:initの呼び出し、戻り値、コールスタックをtrace</p>
+
+<pre><code>redbug:start({riak_kv_get_fsm, init, [return, stack]}).
+</code></pre>
+
+<p>riak_kv_put_fsm:execute(pw, _, default)の呼び出し、戻り値をtrace (引数によるマッチング)</p>
+
+<pre><code>redbug:start({riak_kv_put_fsm, '_', [{pw,'_',default},return]}).
+</code></pre>
+
+<p>riak_kv_get_fsm:initの呼び出しをtrace、Timeout 1,000msec</p>
+
+<pre><code>redbug:start({riak_kv_get_fsm, init}, [{time, 1000}]).
+</code></pre>
+
+<p>riak_kv_get_fsm:initの呼び出しをtrace、Timeout 1,000msec</p>
+
+<pre><code>redbug:start({riak_kv_get_fsm, init}, [{time, 1000}, {msgs, 20}]).
+</code></pre>
+
+<h3>その他オプションとそのデフォルト値</h3>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="n">time</span>         <span class="o">=</span> <span class="mi">15000</span>        <span class="c">% ms</span>
+</span><span class='line'><span class="n">msgs</span>         <span class="o">=</span> <span class="mi">10</span>           <span class="c">% unit</span>
+</span><span class='line'><span class="n">proc</span>         <span class="o">=</span> <span class="n">all</span>          <span class="c">% list of procs (or &#39;all&#39;)</span>
+</span><span class='line'><span class="n">target</span>       <span class="o">=</span> <span class="nb">node</span><span class="p">()</span>       <span class="c">% target node</span>
+</span><span class='line'><span class="n">cookie</span>       <span class="o">=</span> <span class="err">&#39;&#39;</span>           <span class="c">% target node cookie</span>
+</span><span class='line'><span class="n">buffered</span>     <span class="o">=</span> <span class="n">no</span>           <span class="c">% output buffering</span>
+</span><span class='line'><span class="n">arity</span>        <span class="o">=</span> <span class="n">false</span>        <span class="c">% arity instead of args</span>
+</span><span class='line'><span class="n">print_call</span>   <span class="o">=</span> <span class="n">true</span>         <span class="c">% print calls (see `return_only&#39;)</span>
+</span><span class='line'><span class="n">print_form</span>   <span class="o">=</span> <span class="s">&quot;</span><span class="si">~s~n</span><span class="s">&quot;</span>       <span class="c">% format for printing</span>
+</span><span class='line'><span class="n">print_file</span>   <span class="o">=</span> <span class="s">&quot;&quot;</span>           <span class="c">% file to print to (standard_io)</span>
+</span><span class='line'><span class="n">print_msec</span>   <span class="o">=</span> <span class="n">false</span>        <span class="c">% print milliseconds in timestamps?</span>
+</span><span class='line'><span class="n">print_depth</span>  <span class="o">=</span> <span class="mi">999999</span>       <span class="c">% Limit for &quot;~P&quot; formatting depth</span>
+</span><span class='line'><span class="n">print_re</span>     <span class="o">=</span> <span class="s">&quot;&quot;</span>           <span class="c">% regexp that must match to print</span>
+</span><span class='line'><span class="n">max_queue</span>    <span class="o">=</span> <span class="mi">5000</span>         <span class="c">% max # of msgs before suicide</span>
+</span><span class='line'><span class="n">max_msg_size</span> <span class="o">=</span> <span class="mi">50000</span>        <span class="c">% max message size before suicide</span>
+</span><span class='line'><span class="n">file</span>         <span class="o">=</span> <span class="s">&quot;&quot;</span>           <span class="c">% file to write trace msgs to</span>
+</span><span class='line'><span class="n">file_size</span>    <span class="o">=</span> <span class="mi">1</span>            <span class="c">% file size (per file [Mb])</span>
+</span><span class='line'><span class="n">file_count</span>   <span class="o">=</span> <span class="mi">8</span>            <span class="c">% number of files in wrap log</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>ざっくりですが以上です。</p>
+
+<p>余談ですが、Riakはeperを含んでいるので、<code>riak attach</code>するだけでredbugで内部をトレースできます。redbugはRiakの勉強にも、もってこいですね。ではでは。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/12/12/riak-advent-calendar-2013-07/">ひとりでやる(?)Riak Advent Calendar 2012 Day7 - Ruby Clientで遊んでみよう</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-12T23:29:00+09:00" pubdate data-updated="true">2012-12-12 23:29</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>ということでRiakのRubyライブラリをご紹介。RiakのProtocol Buffer/HTTPクライアントであるriak-ruby-clientとObject MapperであるRippleの２本立てです。Rippleに関してはRailsへの導入方法を簡単に説明します。</p>
+
+<ul>
+<li>riak-ruby-clientの使い方</li>
+<li>RailsへRippleを導入する</li>
+</ul>
+
+
+<h2><a href="https://github.com/basho/riak-ruby-client">riak-ruby-client</a>の使い方</h2>
+
+<h3>インストール</h3>
+
+<p>gemでサクッとインストールします。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>% gem install riak-client
+</span><span class='line'>Successfully installed riak-client-1.1.0
+</span><span class='line'>1 gem installed</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>利用方法</h3>
+
+<h4>1. Clientの生成</h4>
+
+<p>Procotol Bufferを使うか、HTTPを使うかをnewするときに指定できます。</p>
+
+<h5>1.1. HTTP</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;riak&#39;</span>
+</span><span class='line'><span class="n">client</span> <span class="o">=</span> <span class="no">Riak</span><span class="o">::</span><span class="no">Client</span><span class="o">.</span><span class="n">new</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>1.2. Protocol Buffer</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;riak&#39;</span>
+</span><span class='line'><span class="n">client</span> <span class="o">=</span> <span class="no">Riak</span><span class="o">::</span><span class="no">Client</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">:protocol</span> <span class="o">=&gt;</span> <span class="s2">&quot;pbc&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>1.3. 複数ノードへの接続</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;riak&#39;</span>
+</span><span class='line'><span class="n">client</span> <span class="o">=</span> <span class="no">Riak</span><span class="o">::</span><span class="no">Client</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">:nodes</span> <span class="o">=&gt;</span> <span class="o">[</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:host</span> <span class="o">=&gt;</span> <span class="s1">&#39;10.0.0.1&#39;</span><span class="p">},</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:host</span> <span class="o">=&gt;</span> <span class="s1">&#39;10.0.0.2&#39;</span><span class="p">,</span> <span class="ss">:pb_port</span> <span class="o">=&gt;</span> <span class="mi">7070</span><span class="p">},</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:host</span> <span class="o">=&gt;</span> <span class="s1">&#39;10.0.0.3&#39;</span><span class="p">,</span> <span class="ss">:http_port</span> <span class="o">=&gt;</span> <span class="mi">8080</span><span class="p">}</span>
+</span><span class='line'><span class="o">]</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>2. Objectを保存する</h4>
+
+<p>生成したclientを使ってObjectを保存します。
+やり方が３パターンほどあるので、それぞれサンプルをご紹介。
+Riak::RObjectの生成方法が違うだけでやっていることは同じです。</p>
+
+<h5>2.1 シンプルに使う</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">bucket</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">bucket</span><span class="p">(</span><span class="s2">&quot;doc&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">object</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">get_or_new</span><span class="p">(</span><span class="s2">&quot;index.html&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">raw_data</span> <span class="o">=</span> <span class="s2">&quot;&lt;html&gt;&lt;body&gt;Hello, world!&lt;/body&gt;&lt;/html&gt;&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;text/html&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">store</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>2.2 Riak::RObjectを明示的に利用</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">bucket</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">bucket</span><span class="p">(</span><span class="s2">&quot;doc&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">new_one</span> <span class="o">=</span> <span class="no">Riak</span><span class="o">::</span><span class="no">RObject</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">bucket</span><span class="p">,</span> <span class="s2">&quot;index2.html&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">raw_data</span> <span class="o">=</span> <span class="s2">&quot;&lt;html&gt;&lt;body&gt;Hello, world!&lt;/body&gt;&lt;/html&gt;&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;text/html&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">store</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>2.3 ハッシュを使って</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">object</span> <span class="o">=</span> <span class="n">client</span><span class="o">[</span><span class="s1">&#39;doc&#39;</span><span class="o">][</span><span class="s1">&#39;index.html&#39;</span><span class="o">]</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">raw_data</span> <span class="o">=</span> <span class="s2">&quot;&lt;html&gt;&lt;body&gt;Hello, world!&lt;/body&gt;&lt;/html&gt;&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;text/html&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">store</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>保存したデータを<a href="https://github.com/jkbr/httpie">httpie</a>で確認してみます。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="sx">% http </span><span class="n">localhost</span><span class="p">:</span><span class="mi">8098</span><span class="o">/</span><span class="n">buckets</span><span class="o">/</span><span class="n">doc</span><span class="o">/</span><span class="n">keys</span><span class="o">/</span><span class="n">index</span><span class="o">.</span><span class="n">html</span>
+</span><span class='line'><span class="no">HTTP</span><span class="o">/</span><span class="mi">1</span><span class="o">.</span><span class="mi">1</span> <span class="mi">200</span> <span class="no">OK</span>
+</span><span class='line'><span class="no">Content</span><span class="o">-</span><span class="no">Length</span><span class="p">:</span> <span class="mi">39</span>
+</span><span class='line'><span class="no">Content</span><span class="o">-</span><span class="no">Type</span><span class="p">:</span> <span class="n">text</span><span class="o">/</span><span class="n">html</span><span class="p">;</span> <span class="n">charset</span><span class="o">=</span><span class="no">UTF</span><span class="o">-</span><span class="mi">8</span>
+</span><span class='line'><span class="no">Date</span><span class="p">:</span> <span class="no">Wed</span><span class="p">,</span> <span class="mi">12</span> <span class="no">Dec</span> <span class="mi">2012</span> <span class="mi">16</span><span class="p">:</span><span class="mi">55</span><span class="p">:</span><span class="mi">44</span> <span class="no">GMT</span>
+</span><span class='line'><span class="no">ETag</span><span class="p">:</span> <span class="s2">&quot;44tAJLzAUJTa20TtR8s5fJ&quot;</span>
+</span><span class='line'><span class="no">Last</span><span class="o">-</span><span class="no">Modified</span><span class="p">:</span> <span class="no">Wed</span><span class="p">,</span> <span class="mi">12</span> <span class="no">Dec</span> <span class="mi">2012</span> <span class="mi">14</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">48</span> <span class="no">GMT</span>
+</span><span class='line'><span class="no">Link</span><span class="p">:</span> <span class="o">&lt;</span><span class="sr">/buckets/</span><span class="n">doc</span><span class="o">&gt;</span><span class="p">;</span> <span class="n">rel</span><span class="o">=</span><span class="s2">&quot;up&quot;</span>
+</span><span class='line'><span class="no">Server</span><span class="p">:</span> <span class="no">MochiWeb</span><span class="o">/</span><span class="mi">1</span><span class="o">.</span><span class="mi">1</span> <span class="no">WebMachine</span><span class="o">/</span><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">0</span> <span class="p">(</span><span class="n">someone</span> <span class="n">had</span> <span class="n">painted</span> <span class="n">it</span> <span class="n">blue</span><span class="p">)</span>
+</span><span class='line'><span class="no">Vary</span><span class="p">:</span> <span class="no">Accept</span><span class="o">-</span><span class="no">Encoding</span>
+</span><span class='line'><span class="n">X</span><span class="o">-</span><span class="no">Riak</span><span class="o">-</span><span class="no">Vclock</span><span class="p">:</span> <span class="n">a85hYGBgzGDKBVIcypz</span><span class="o">/</span><span class="n">fgacmLY0gymRKY</span><span class="o">+</span><span class="no">VoUbM9hRfFgA</span><span class="o">=</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">html</span><span class="o">&gt;&lt;</span><span class="n">body</span><span class="o">&gt;</span><span class="no">Hello</span><span class="p">,</span> <span class="n">world!</span><span class="o">&lt;</span><span class="sr">/body&gt;&lt;/</span><span class="n">html</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>はい、確認できました。
+簡単ですがriak-ruby-clientの紹介はここまで。</p>
+
+<h2>RailsへRippleを導入する</h2>
+
+<p><a href="https://github.com/basho/ripple">Ripple</a> - A rich Ruby modeling layer for Riak -</p>
+
+<p>RippleはRiakのデータをオブジェクトにマッピングしてくれるライブラリです。ActiveRecordライクに利用できます。
+Riakを使ってアプリケーションを作る際には、基本的にRippleやそれに類似したライブラリを使うことになる筈です。</p>
+
+<p>それではRailsへRippleを導入する方法を簡単に紹介します。</p>
+
+<p>なお、このサンプルではRails 3.2.8を使用しています。</p>
+
+<h4>1. Railsアプリケーションの生成</h4>
+
+<p><code>rails new</code>でアプリケーションを生成します</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="sx">% rails </span><span class="kp">new</span> <span class="n">ripple</span><span class="o">-</span><span class="n">example</span>
+</span><span class='line'>      <span class="n">create</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="no">README</span><span class="o">.</span><span class="n">rdoc</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="no">Rakefile</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">config</span><span class="o">.</span><span class="n">ru</span>
+</span><span class='line'><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'><span class="sx">% cd </span><span class="n">ripple</span><span class="o">-</span><span class="n">example</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>2. rippleをdependenciesへ追加</h4>
+
+<p>Gemfileに以下を追加します。
+Railsの3.2.8を使っているのでrippleは1.0.0.beta2を使います。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">gem</span> <span class="s2">&quot;ripple&quot;</span><span class="p">,</span> <span class="s2">&quot;~&gt;1.0.0.beta2&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>bundle installします。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">bundle</span> <span class="n">install</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>3. セットアップ</h4>
+
+<p><code>rails g ripple</code>します。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="sx">% rails </span><span class="n">g</span> <span class="n">ripple</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">config</span><span class="o">/</span><span class="n">ripple</span><span class="o">.</span><span class="n">yml</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">app</span><span class="o">/</span><span class="n">mapreduce</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">app</span><span class="o">/</span><span class="n">mapreduce</span><span class="o">/</span><span class="n">contrib</span><span class="o">.</span><span class="n">js</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">app</span><span class="o">/</span><span class="n">mapreduce</span><span class="o">/</span><span class="n">iso8601</span><span class="o">.</span><span class="n">js</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">app</span><span class="o">/</span><span class="n">mapreduce</span><span class="o">/</span><span class="n">ripple</span><span class="o">.</span><span class="n">js</span>
+</span><span class='line'>      <span class="n">insert</span>  <span class="nb">test</span><span class="o">/</span><span class="n">test_helper</span><span class="o">.</span><span class="n">rb</span>
+</span><span class='line'>      <span class="n">insert</span>  <span class="nb">test</span><span class="o">/</span><span class="n">test_helper</span><span class="o">.</span><span class="n">rb</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>config/ripple.ymlを編集してRiakの設定を自分の環境に合わせます。
+sourceにはローカルのriakコマンドがインストールされているパスを設定してください。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">development</span><span class="p">:</span>
+</span><span class='line'>  <span class="n">http_port</span><span class="p">:</span> <span class="mi">8098</span>
+</span><span class='line'>  <span class="n">pb_port</span><span class="p">:</span> <span class="mi">8087</span>
+</span><span class='line'>  <span class="n">host</span><span class="p">:</span> <span class="mi">127</span><span class="o">.</span><span class="mi">0</span><span class="o">.</span><span class="mi">0</span><span class="o">.</span><span class="mi">1</span>
+</span><span class='line'>  <span class="n">source</span><span class="p">:</span><span class="sr"> /usr/</span><span class="n">local</span><span class="o">/</span><span class="n">bin</span>  <span class="c1">#Default for Homebrew.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>それでは試しにmodelを生成します。
+propertiesとしてname, ageを指定してみました。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="sx">% rails </span><span class="n">g</span> <span class="n">ripple</span><span class="ss">:model</span> <span class="no">User</span> <span class="nb">name</span><span class="ss">:string</span> <span class="n">age</span><span class="ss">:integer</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">app</span><span class="o">/</span><span class="n">models</span><span class="o">/</span><span class="n">user</span><span class="o">.</span><span class="n">rb</span>
+</span><span class='line'>      <span class="n">invoke</span>  <span class="n">test_unit</span>
+</span><span class='line'>      <span class="n">create</span>    <span class="nb">test</span><span class="o">/</span><span class="n">unit</span><span class="o">/</span><span class="n">user_test</span><span class="o">.</span><span class="n">rb</span>
+</span><span class='line'>      <span class="n">create</span>    <span class="nb">test</span><span class="o">/</span><span class="n">fixtures</span><span class="o">/</span><span class="n">users</span><span class="o">.</span><span class="n">yml</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>生成したModelはこんな感じになります。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">User</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="no">Ripple</span><span class="o">::</span><span class="no">Document</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">property</span> <span class="ss">:name</span><span class="p">,</span> <span class="nb">String</span>
+</span><span class='line'>  <span class="n">property</span> <span class="ss">:age</span><span class="p">,</span> <span class="nb">Integer</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>4. 動作確認</h4>
+
+<p>consoleで動作確認してみます。
+まずはデータを保存。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="sx">% rails </span><span class="n">console</span>
+</span><span class='line'><span class="no">Loading</span> <span class="n">development</span> <span class="n">environment</span> <span class="p">(</span><span class="no">Rails</span> <span class="mi">3</span><span class="o">.</span><span class="mi">2</span><span class="o">.</span><span class="mi">8</span><span class="p">)</span>
+</span><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">001</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="n">user</span> <span class="o">=</span> <span class="no">User</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">&lt;</span><span class="no">User</span><span class="p">:</span><span class="o">[</span><span class="kp">new</span><span class="o">]</span> <span class="nb">name</span><span class="o">=</span><span class="kp">nil</span> <span class="n">age</span><span class="o">=</span><span class="kp">nil</span><span class="o">&gt;</span>
+</span><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">002</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;たろう&#39;</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;たろう&quot;</span>
+</span><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">003</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="mi">18</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="mi">18</span>
+</span><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">004</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="n">user</span><span class="o">.</span><span class="n">save</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">005</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="n">user</span><span class="o">.</span><span class="n">key</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;QB4nWCL1SpvCe5csclOUgmNX7XN&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>保存後に取得したkeyの値がオブジェクトのIDとなります。
+このIDを使ってデータが保存されたか確認してみます。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">006</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="no">User</span><span class="o">.</span><span class="n">find</span> <span class="s2">&quot;QB4nWCL1SpvCe5csclOUgmNX7XN&quot;</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">&lt;</span><span class="no">User</span><span class="ss">:QB4nWCL1SpvCe5csclOUgmNX7XN</span> <span class="nb">name</span><span class="o">=</span><span class="s2">&quot;たろう&quot;</span> <span class="n">age</span><span class="o">=</span><span class="mi">18</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>はい、保存されていますね。</p>
+
+<p>なお、オブジェクトのID(riakのkey名)は、以下の<code>key\_on</code>をModel内で指定する事により、
+自動生成された値でなく、特定のproperyを使用することができます。
+下記の例だとkey_nameというpropertyがriakのkey名に使われます。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">key_on</span> <span class="ss">:key_name</span> <span class="c1"># use :key_name as key name.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>こんな感じでRiak+Railsのアプリケーションを作って遊んでみてはいかがでしょうか。
+今日はここまで。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/11/19/how-to-use-vagrant/">Vagrantメモ</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-19T01:09:00+09:00" pubdate data-updated="true">2012-11-19 01:09</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h3>create vagrant box using veewee.</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ vagrant basebox templates
+</span><span class='line'>The following templates are available:
+</span><span class='line'>vagrant basebox define '&lt;boxname&gt;' 'CentOS-4.8-i386'
+</span><span class='line'>vagrant basebox define '&lt;boxname&gt;' 'CentOS-5.5-i386-netboot'
+</span><span class='line'>vagrant basebox define '&lt;boxname&gt;' 'CentOS-5.5-x86_64-netboot'
+</span><span class='line'>vagrant basebox define '&lt;boxname&gt;' 'CentOS-5.6-i386'
+</span><span class='line'>vagrant basebox define '&lt;boxname&gt;' 'CentOS-5.6-i386-netboot'
+</span><span class='line'>...
+</span><span class='line'>$ vagrant basebox define 'CentOS-6.2-x86_64-minimal'  'CentOS-6.2-x86_64-minimal'
+</span><span class='line'>
+</span><span class='line'>  *customizing definitions*
+</span><span class='line'>
+</span><span class='line'>$ vagrant basebox build CentOS-6.2-x86_64-minimal
+</span><span class='line'>$ vagrant basebox export CentOS-6.2-x86_64-minimal
+</span><span class='line'>$ vagrant box add CentOS-6.2-x86_64-minimal CentOS-6.2-x86_64-minimal.box</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>create and connect to VM.</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ vagrant init CentOS-6.2-x86_64-minimal
+</span><span class='line'>$ vagrant up
+</span><span class='line'>$ vagrant ssh</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>no-provision</h3>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>vagrant up --no-provision</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>debugging</h3>
+
+<p>verbose logging.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>VAGRANT_LOG=INFO vagrant up</span></code></pre></td></tr></table></div></figure>
+
+
+<p>check console with gui mode.</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>config.vm.boot_mode = :gui</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>default account</h3>
+
+<p>id/pass</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>vagrant/vagrant
+</span><span class='line'>root/vagrant</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/11/18/shutdown-erl/">Erlの停止</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-18T23:06:00+09:00" pubdate data-updated="true">2012-11-18 23:06</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>erlangシェルを停止させるとき、<code>q()</code>だと停止に時間が掛かり、<code>&lt;Crt+G&gt;, q</code>だと即座に停止する。
+この２つの違いを先日追いかけたので記録しておく。</p>
+
+<h3>q() の場合</h3>
+
+<p>まずはerlシェル上でq()を呼び出した場合の挙動。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Eshell V5.9.2  (abort with ^G)
+</span><span class='line'>1&gt; q().
+</span><span class='line'>ok</span></code></pre></td></tr></table></div></figure>
+
+
+<p>マニュアルによるとこれは<code>shell_default:q/0</code>を呼び出している。</p>
+
+<figure class='code'><figcaption><span>lib/stdlib/src/shell_default.erl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="nf">q</span><span class="p">()_____</span><span class="o">-&gt;</span> <span class="nn">c</span><span class="p">:</span><span class="n">q</span><span class="p">().</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>最終的に<code>init:stop/0</code></p>
+
+<figure class='code'><figcaption><span>stdlib/src/c.erl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="nf">q</span><span class="p">()</span> <span class="o">-&gt;</span>
+</span><span class='line'>    <span class="nn">init</span><span class="p">:</span><span class="n">stop</span><span class="p">().</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>init:stop/0</code>はコードが負えなかったので、<code>man init</code>を読む。すると</p>
+
+<blockquote><p>All applications are taken down smoothly, all code is unloaded, and all ports are closed before the system terminates.</p></blockquote>
+
+
+<p>となっており、アプリケーションを正式な手順で停止させる雰囲気。</p>
+
+<p>追記: たぶん<code>erts/preloaded/src/init.erl</code>から更に追える。</p>
+
+<h3>&lt;Crl+G>, q の場合</h3>
+
+<p>次にCrl+G, qの場合。(JCLモードで<code>q</code>)</p>
+
+<figure class='code'><figcaption><span>stdlib/src/c.erl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="nv">Eshell</span> <span class="nv">V5</span><span class="p">.</span><span class="mi">9</span><span class="p">.</span><span class="mi">2</span>  <span class="p">(</span><span class="n">abort</span> <span class="n">with</span> <span class="err">^</span><span class="nv">G</span><span class="p">)</span>
+</span><span class='line'><span class="mi">1</span><span class="o">&gt;</span>
+</span><span class='line'><span class="nv">User</span> <span class="n">switch</span> <span class="n">command</span>
+</span><span class='line'> <span class="o">--&gt;</span> <span class="n">q</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>User switch command</code>でgrepすると<code>user_drv.erl</code>が使われている様子。</p>
+
+<figure class='code'><figcaption><span>lib/kernel/src/user_drv.erl</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='erlang'><span class='line'><span class="nf">switch_cmd</span><span class="p">({</span><span class="n">ok</span><span class="p">,[{</span><span class="n">atom</span><span class="p">,_,</span><span class="n">q</span><span class="p">}],_},</span> <span class="nv">Iport</span><span class="p">,</span> <span class="nv">Oport</span><span class="p">,</span> <span class="nv">Gr</span><span class="p">)</span> <span class="o">-&gt;</span>
+</span><span class='line'>    <span class="k">case</span> <span class="nn">erlang</span><span class="p">:</span><span class="nb">system_info</span><span class="p">(</span><span class="n">break_ignored</span><span class="p">)</span> <span class="k">of</span>
+</span><span class='line'>    <span class="n">true</span> <span class="o">-&gt;</span><span class="p">_________________</span><span class="c">% noop</span>
+</span><span class='line'>        <span class="n">io_request</span><span class="p">({</span><span class="n">put_chars</span><span class="p">,</span><span class="n">unicode</span><span class="p">,</span><span class="s">&quot;Unknown command</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">},</span> <span class="nv">Iport</span><span class="p">,</span> <span class="nv">Oport</span><span class="p">),</span>
+</span><span class='line'>        <span class="n">switch_loop</span><span class="p">(</span><span class="nv">Iport</span><span class="p">,</span> <span class="nv">Oport</span><span class="p">,</span> <span class="nv">Gr</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">false</span> <span class="o">-&gt;</span>
+</span><span class='line'>        <span class="n">halt</span><span class="p">()</span>
+</span><span class='line'>    <span class="k">end</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p><code>man erlang</code>より</p>
+
+<blockquote><p>For  integer  Status the Erlang runtime system closes all ports and allows async threads to finish their operations before exiting.</p></blockquote>
+
+
+<h3>まとめ</h3>
+
+<ul>
+<li><code>q()</code> はapplicationの停止、コードのunloadをした上でruntimeを停止</li>
+<li><code>&lt;Crl+G&gt;, q</code>は単にruntimeを停止</li>
+</ul>
+
+
+<p>諸々調べた後でマニュアルに停止方法が纏めてあることに気づいたが、
+なぜか<code>q()</code>が紹介されていなかった。</p>
+
+<blockquote><p>4.4  How do I quit the Erlang shell?<br/>  To shut a system down cleanly,  use init:stop().<br/>  Some quick ways are evaluating halt(). or Control+&#46;<br/>  Control+C and Control+G give you access to menus.</p></blockquote>
+
+
+<p>そういえば<code>erts/preloaded</code>にはerlang, prim_inet, initモジュール等が入っているので追っかけてみると楽しいかもしれない。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/11/16/setup-php/">PHP環境メモ</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-16T11:00:00+09:00" pubdate data-updated="true">2012-11-16 11:00</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>PHPを触ることになったので環境設定をメモ。</p>
+
+<p>とりあえずは phpenv, php-build, composer, phpunit をチョイス。</p>
+
+<h1>PHP</h1>
+
+<h2>install phpenv</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>curl https://raw.github.com/CHH/phpenv/master/bin/phpenv-install.sh | sh
+</span><span class='line'>echo export PATH = ~/.phpenv/bin:$PATH &gt;&gt; ~/.zshrc
+</span><span class='line'>echo eval "$(phpenv init - zsh)" ~/.zshrc
+</span><span class='line'>source ~/.zshrc</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>install php-build</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>mkdir -p ~/.phpenv/plugins
+</span><span class='line'>cd ~/.phpenv/plugins
+</span><span class='line'>git clone git://github.com/CHH/php-build.git
+</span><span class='line'>curl https://raw.github.com/hnw/php-build/plugin-to-chh-phpenv/bin/rbenv-install &gt; php-build/bin/rbenv-install
+</span><span class='line'>chmod 755 php-build/bin/rbenv-install</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>install php</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>brew install libjpeg re2c mcrypt
+</span><span class='line'>phpenv install 5.4.8</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Composer (Package manager)</h1>
+
+<h2>install composer</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>curl -s https://getcomposer.org/installer | php && mv -v composer.phar /usr/local/bin/composer
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>create composer.json</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>{
+</span><span class='line'>    "config": {
+</span><span class='line'>        "bin-dir": "."
+</span><span class='line'>    },
+</span><span class='line'>    "require": {
+</span><span class='line'>        "xxx/xxxx": "2.*"
+</span><span class='line'>    },
+</span><span class='line'>    "require-dev": {
+</span><span class='line'>        "phpunit/phpunit": "3.7.*",
+</span><span class='line'>    }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>install dependencies(with require-dev)</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>composer install --dev
+</span><span class='line'>        or
+</span><span class='line'>composer update --dev</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>PHPUnit</h1>
+
+<h2>configuration file.</h2>
+
+<p>create <code>phpunit.xml.dist</code></p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>&lt;phpunit
+</span><span class='line'>    bootstrap="vendor/autoload.php"
+</span><span class='line'>    processIsolation="false"
+</span><span class='line'>    verbose="true"
+</span><span class='line'>    strict="false"
+</span><span class='line'>    colors="true"&gt;
+</span><span class='line'>    &lt;testsuites&gt;
+</span><span class='line'>        &lt;testsuite name="PHPUnit"&gt;
+</span><span class='line'>            &lt;directory&gt;test&lt;/directory&gt;
+</span><span class='line'>        &lt;/testsuite&gt;
+</span><span class='line'>    &lt;/testsuites&gt;
+</span><span class='line'>&lt;/phpunit&gt;</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>run test</h2>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>./phpunit</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>参考</h4>
+
+<ul>
+<li><a href="http://qiita.com/items/81085381c4281e498cde">http://qiita.com/items/81085381c4281e498cde</a></li>
+<li><a href="http://blog.yuyat.jp/archives/1446">http://blog.yuyat.jp/archives/1446</a></li>
+<li><a href="http://d.hatena.ne.jp/hnw/20120828">http://d.hatena.ne.jp/hnw/20120828</a></li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/11/15/installing-http-trace-on-centos/">Installing Http trace on CentOS</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-15T11:56:00+09:00" pubdate data-updated="true">2012-11-15 11:56</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>コピペ用</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>wget http://nodejs.tchol.org/repocfg/el/nodejs-stable-release.noarch.rpm
+</span><span class='line'>yum localinstall --nogpgcheck -y nodejs-stable-release.noarch.rpm
+</span><span class='line'>yum install -y nodejs-compat-symlinks npm libpcap-devel
+</span><span class='line'>npm -g install http_trace</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/10/11/octopress-on-another-machine/">Octopressを別マシンでセットアップ</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-11T19:29:00+09:00" pubdate data-updated="true">2012-10-11 19:29</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>ご覧のとおり、このブログはOctopressを使っています。
+最近、新しいマシンでブログを書こうとしたら、<code>rake deploy</code>が上手く動かなかったよという話。
+<code>git clone</code>しただけではダメみたいです。</p>
+
+<p>ちなみにOctopressのverisionは2.0</p>
+
+<h4>手順</h4>
+
+<ol>
+<li>github上でデフォルトのブランチをsourceにする。</li>
+<li><code>git clone</code></li>
+<li><code>rake setup_github_pages</code></li>
+</ol>
+
+
+<p>要するに<code>rake setup_github_pages</code>しとけという話です。</p>
+
+<p>１は必須ではないと思いますが、やっとくと楽です。
+これで無事デプロイできるようになりました。ってまぁ、このエントリが公開されてることがその証明なわけです。</p>
+
+<p>原因はデプロイ用の<code>_deploy</code>ディレクトリがorigin/masterに紐付いてなかったこと。</p>
+
+<p>Rakefileを見ればわかりますが、<code>setup_github_pages</code>の役割は元のoctopressのリポジトリをどけるだけでなく、
+ローカルリポジトリの<code>_deploy</code>ディレクトリを<code>master</code>ブランチに関連付ける役割もありました。</p>
+
+<p>まぁ、そんだけです。</p>
+
+<h3>※追記</h3>
+
+<p>どうやらmasterブランチの歴史が書き換わる（初期化される）ので、
+それが嫌なら自力で<code>_deploy</code>ディレクトリをセットアップするしかなさそうですね。</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/09/30/build-erlang/">Erlangのビルド</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-30T22:56:00+09:00" pubdate data-updated="true">2012-09-30 22:56</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>OSXへErlangをソースからいれた時のメモ。
+&#8211;enable-darwin-64bitつけないと後でトラブるよ。という事でメモ。</p>
+
+<pre><code>git clone git://github.com/erlang/otp.git
+cd otp
+git checkout -b OTP_R15B03 OTP_R15B03
+./otp_build autoconf
+./otp_build configure --disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll  --enable-darwin-64bit --prefix=/usr/local/erlang/OTP_R15B03
+make &amp;&amp; make install
+</code></pre>
+
+<p>PREFIXはお好みで。</p>
+
+<p>あとは適当にPATHとか足しとく</p>
+
+<h4>DTrace support</h4>
+
+<p><code>--with-dynamic-trace=dtrace</code>をconfigureのオプションに追加する。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>./otp_build configure --with-dynamic-trace=dtrace --disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll  --enable-darwin-64bit --prefix=/usr/local/erlang/OTP_R15B03</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/06/27/homebrew-install/">デフォルトディレクトリ以外へのHomebrewインストール</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-27T03:15:00+09:00" pubdate data-updated="true">2012-06-27 03:15</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Homebrewはデフォルトで /usr/local へインストールされるが、
+これを /usr/local/homebrew へインストールしたときの手順</p>
+
+<h2>インストール</h2>
+
+<pre><code>cd /usr/local
+sudo git clone git://github.com/mxcl/homebrew.git homebrew
+sudo chgrp -R staff homebrew bin include lib etc var
+sudo chmod -R 775 homebrew bin include lib etc var
+ln -s /usr/local/homebrew/bin/brew /usr/local/bin/brew
+</code></pre>
+
+<p>MANPATHを通しておく(.zshenv)</p>
+
+<pre><code>export MANPATH=$MANPATH:/usr/local/homebrew/share/man
+</code></pre>
+
+<p>Homebrewはドキュメントにもあるように /usr/local にシンボリックリンクを作らなければならないので、
+/usr/local/homebrew/bin へPATHを通してはいけない。</p>
+
+<blockquote><p>Everything will install into ~/Developer, but your brew command is still in the path.
+NOTE that Homebrew will still need to create symlinks into /usr/local or nothing will work!
+But the actual files are installed to ~/Developer/Cellar.</p></blockquote>
+
+<h2>デフォルトインストール時(/usr/local)のアンインストール手順</h2>
+
+<p>アンインストールの手段が提供されていないので、個別にインストールファイルを削除する。</p>
+
+<p>gistにアンインストール用のスクリプトが公開されているので、これを使うと便利。</p>
+
+<p><a href="https://gist.github.com/1173223">https://gist.github.com/1173223</a></p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/06/08/missing-shared-object/">Cannot Open Shared Object Fileの対処</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-08T20:10:00+09:00" pubdate data-updated="true">2012-06-08 20:10</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Linuxでshared objectが見つからない時の対処方法。いい加減メモっとく。</p>
+
+<h2>事象</h2>
+
+<p>svnを叩いたら libaprutil-1.so が見つからないと起こられた。</p>
+
+<pre><code>svn: error while loading shared libraries: libaprutil-1.so.0: cannot open shared object file: No such file or directory
+</code></pre>
+
+<p>ちなみにapacheを/usr/local/apacheへインストールしたのにライブラリの検索パスを通してない事が原因。ということでパスを通しましょう。</p>
+
+<h2>対応方法</h2>
+
+<h3>1. lddでリンクしているライブラリを調べる</h3>
+
+<p>やらなくても良いけど、とりあえず眺めとく。</p>
+
+<pre><code>$ ldd `which svn`
+
+-- 略 --
+
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+</code></pre>
+
+<p>はい、確かに見つかってないです。</p>
+
+<h3>2. ライブラリの検索パス追加</h3>
+
+<p>/etc/ld.so.conf.d/apache.conf を作成して以下を書く。</p>
+
+<pre><code>/usr/local/apache/lib
+</code></pre>
+
+<p>もしくは /etc/ld.so.conf へ直接追記してもOK.</p>
+
+<h3>3. リンクとキャッシュ(/etc/ld.so.cache)の更新</h3>
+
+<p>ldconfig実行。</p>
+
+<pre><code>$ ldconfig
+</code></pre>
+
+<p>-v オプションで詳細が出力されます。</p>
+
+<h3>4. 動作確認</h3>
+
+<p>パスが通ったか確認。</p>
+
+<pre><code>$ ldconfig -p | grep libapr
+libaprutil-1.so.0 (libc6,x86-64) =&gt; /usr/local/apache/lib/libaprutil-1.so.0
+libaprutil-1.so.0 (libc6) =&gt; /usr/lib/libaprutil-1.so.0
+libaprutil-1.so (libc6,x86-64) =&gt; /usr/local/apache/lib/libaprutil-1.so
+libapr-1.so.0 (libc6,x86-64) =&gt; /usr/local/apache/lib/libapr-1.so.0
+libapr-1.so.0 (libc6) =&gt; /usr/lib/libapr-1.so.0
+libapr-1.so (libc6,x86-64) =&gt; /usr/local/apache/lib/libapr-1.so
+</code></pre>
+
+<p>はい、認識されました。</p>
+
+<p>svnを実行してみます。</p>
+
+<pre><code>$ svn
+使用方法を知りたいときは 'svn help' と打ってください。
+</code></pre>
+
+<p>無事実行できました。</p>
+
+<h2>参考</h2>
+
+<ul>
+<li><a href="http://linuxjm.sourceforge.jp/html/LDP_man-pages/man8/ld.so.8.html">ld.so</a></li>
+<li><a href="http://linuxjm.sourceforge.jp/html/LDP_man-pages/man8/ldconfig.8.html">ldconfig</a></li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/blog/page/2/">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    
+<section>
+<img src="http://gravatar.com/avatar/3cb9536d180c2144c16db29a34e2fd39?s=80" alt="ksauzz" title="ksauzz" />
+</section>
+
+<section>
+  <h1>About Me</h1>
+  <p>software engineer.</p>
+  <a href="http://about.me/ksauzz">http://about.me/ksauzz</a>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/04/30/redbug/">Erlangのデバッグツール redbug</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/12/12/riak-advent-calendar-2013-07/">ひとりでやる(?)Riak Advent Calendar 2012 day7 - Ruby Clientで遊んでみよう </a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/19/how-to-use-vagrant/">Vagrantメモ</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/18/shutdown-erl/">erlの停止</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/16/setup-php/">PHP環境メモ</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+  <h1>Tag Cloud</h1>
+    <span id="tag-cloud"><a href='/blog/categories/cowboy' style='font-size: 115.0%'>cowboy(2)</a> <a href='/blog/categories/erlang' style='font-size: 160.0%'>erlang(8)</a> <a href='/blog/categories/git' style='font-size: 107.5%'>git(1)</a> <a href='/blog/categories/http' style='font-size: 107.5%'>http(1)</a> <a href='/blog/categories/linux' style='font-size: 107.5%'>linux(1)</a> <a href='/blog/categories/mac' style='font-size: 107.5%'>mac(1)</a> <a href='/blog/categories/objectmapper' style='font-size: 107.5%'>objectmapper(1)</a> <a href='/blog/categories/octopress' style='font-size: 107.5%'>octopress(1)</a> <a href='/blog/categories/perl' style='font-size: 107.5%'>perl(1)</a> <a href='/blog/categories/php' style='font-size: 107.5%'>php(1)</a> <a href='/blog/categories/riak' style='font-size: 107.5%'>riak(1)</a> <a href='/blog/categories/ruby' style='font-size: 122.5%'>ruby(3)</a> <a href='/blog/categories/sbt' style='font-size: 107.5%'>sbt(1)</a> <a href='/blog/categories/scala' style='font-size: 107.5%'>scala(1)</a> <a href='/blog/categories/tool' style='font-size: 107.5%'>tool(1)</a> <a href='/blog/categories/vagrant' style='font-size: 107.5%'>vagrant(1)</a> <a href='/blog/categories/vim' style='font-size: 107.5%'>vim(1)</a> <a href='/blog/categories/zeromq' style='font-size: 107.5%'>zeromq(1)</a> </span>
+</section>
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("ksauzz", 4, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/ksauzz" class="twitter-follow-button" data-show-count="false">Follow @ksauzz</a>
+  
+</section>
+
+
+<section>
+  <h1>On Delicious</h1>
+  <div id="delicious"></div>
+  <script type="text/javascript" src="http://feeds.delicious.com/v2/json/ksauzz?count=3&amp;sort=date&amp;callback=renderDeliciousLinks"></script>
+  <p><a href="http://delicious.com/ksauzz">My Delicious Bookmarks &raquo;</a></p>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+  
+  <a href="https://github.com/ksauzz">@ksauzz</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'ksauzz',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+<section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/cowboy'>cowboy (2)</a></li><li><a href='/blog/categories/erlang'>erlang (8)</a></li><li><a href='/blog/categories/git'>git (1)</a></li><li><a href='/blog/categories/http'>http (1)</a></li><li><a href='/blog/categories/linux'>linux (1)</a></li><li><a href='/blog/categories/mac'>mac (1)</a></li><li><a href='/blog/categories/objectmapper'>objectmapper (1)</a></li><li><a href='/blog/categories/octopress'>octopress (1)</a></li><li><a href='/blog/categories/perl'>perl (1)</a></li><li><a href='/blog/categories/php'>php (1)</a></li><li><a href='/blog/categories/riak'>riak (1)</a></li><li><a href='/blog/categories/ruby'>ruby (3)</a></li><li><a href='/blog/categories/sbt'>sbt (1)</a></li><li><a href='/blog/categories/scala'>scala (1)</a></li><li><a href='/blog/categories/tool'>tool (1)</a></li><li><a href='/blog/categories/vagrant'>vagrant (1)</a></li><li><a href='/blog/categories/vim'>vim (1)</a></li><li><a href='/blog/categories/zeromq'>zeromq (1)</a></li></ul>
+</section>
+
+<section>
+  <h1>Coderwall</h1>
+  <ul id="cw_badges">
+    <li class="loading">Status updating&#8230;</li>
+  </ul>
+
+  <script type="text/javascript">
+    var coderwall = (function(){
+      function render(options, badges){
+        var fragment = '',
+            t = $(options.target)[0],
+            height = 65,
+            width = 65,
+            index;
+
+        for (index in badges) {
+          fragment += '<a class="cw_badge"title="' + badges[index].description + '" href="http://coderwall.com/' + options.user + '">';
+          fragment +=   '<img alt="' + badges[index].description + '" height="' + width + '" width="' + height + '" src="' + badges[index].badge + '"/>';
+          fragment += '</a>';
+        }
+
+        t.innerHTML = fragment;
+      }
+      return {
+        showBadges: function(options){
+          $.ajax({
+              url: 'http://coderwall.com/' + options.user + '.json?callback=?'
+            , type: 'jsonp'
+            , error: function (err) { $(options.target + ' li.loading').addClass('error').text("Error loading feed"); }
+            , success: function(res) {
+                render(options, res.data.badges);
+            }
+          });
+        }
+      };
+    })();
+
+    $.domReady(function(){
+      if (!window.jXHR){
+        var jxhr = document.createElement('script');
+        jxhr.type = 'text/javascript';
+        jxhr.src = '/javascripts/libs/jXHR.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(jxhr, s);
+      }
+      if (!window.$){
+        var b = document.createElement('script');
+        b.type = 'text/javascript';
+        b.src = '/javascripts/ender.js';
+        var sc = document.getElementsByTagName('script')[0];
+        sc.parentNode.insertBefore(jxhr, s);
+      }
+      coderwall.showBadges({
+        user: 'ksauzz',
+        target: '#cw_badges'
+      });
+    });
+  </script>
+  <style type="text/css">
+    .cw_badge img {
+      padding: 5px;
+      border: 0 none !important;
+      -moz-box-shadow: none !important;
+      -webkit-box-shadow: none !important;
+      -o-box-shadow: none !important;
+      box-shadow: none !important;
+    }
+  </style>
+</section>
+
+
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2021 - ksauzz -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'ksauzz-octopress';
+      
+        
+        var disqus_script = 'count.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

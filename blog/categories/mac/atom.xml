@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: mac | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/mac/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[デフォルトディレクトリ以外へのHomebrewインストール]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/06/27/homebrew-install/"/>
+    <updated>2012-06-27T03:15:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/06/27/homebrew-install</id>
+    <content type="html"><![CDATA[<p>Homebrewはデフォルトで /usr/local へインストールされるが、
+これを /usr/local/homebrew へインストールしたときの手順</p>
+
+<h2>インストール</h2>
+
+<pre><code>cd /usr/local
+sudo git clone git://github.com/mxcl/homebrew.git homebrew
+sudo chgrp -R staff homebrew bin include lib etc var
+sudo chmod -R 775 homebrew bin include lib etc var
+ln -s /usr/local/homebrew/bin/brew /usr/local/bin/brew
+</code></pre>
+
+<p>MANPATHを通しておく(.zshenv)</p>
+
+<pre><code>export MANPATH=$MANPATH:/usr/local/homebrew/share/man
+</code></pre>
+
+<p>Homebrewはドキュメントにもあるように /usr/local にシンボリックリンクを作らなければならないので、
+/usr/local/homebrew/bin へPATHを通してはいけない。</p>
+
+<blockquote><p>Everything will install into ~/Developer, but your brew command is still in the path.
+NOTE that Homebrew will still need to create symlinks into /usr/local or nothing will work!
+But the actual files are installed to ~/Developer/Cellar.</p></blockquote>
+
+<h2>デフォルトインストール時(/usr/local)のアンインストール手順</h2>
+
+<p>アンインストールの手段が提供されていないので、個別にインストールファイルを削除する。</p>
+
+<p>gistにアンインストール用のスクリプトが公開されているので、これを使うと便利。</p>
+
+<p><a href="https://gist.github.com/1173223">https://gist.github.com/1173223</a></p>
+]]></content>
+  </entry>
+  
+</feed>

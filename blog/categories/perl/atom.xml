@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: perl | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/perl/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[setup perlbrew and cpanminus.]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/03/30/perlbrew/"/>
+    <updated>2012-03-30T19:38:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/03/30/perlbrew</id>
+    <content type="html"><![CDATA[<h1>perlbrew</h1>
+
+<p><a href="http://perlbrew.pl/">http://perlbrew.pl/</a></p>
+
+<p>install perlbrew into <em>$HOME/.perlbrew</em> (default install path is <em>$HOME/perl5</em>)</p>
+
+<pre><code>echo "export PERLBREW_ROOT=$HOME/.perlbrew" &gt;&gt; .zshrc
+curl -kL http://install.perlbrew.pl | bash
+echo "[[ -s ~/.perlbrew/etc/bashrc ]] &amp;&amp; source ~/.perlbrew/etc/bashrc" &gt;&gt; .zshrc
+
+perlbrew install perl-5.15.9
+perlbrew switch perl-5.15.9
+</code></pre>
+
+<h1>cpanminus</h1>
+
+<p><a href="https://github.com/miyagawa/cpanminus">https://github.com/miyagawa/cpanminus</a></p>
+
+<p>install cpanm</p>
+
+<pre><code>perlbrew install-cpanm
+</code></pre>
+
+<p>install module</p>
+
+<pre><code>cpanm module_name
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>

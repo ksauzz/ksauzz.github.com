@@ -1,0 +1,727 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>ひとりでやる(?)Riak Advent Calendar 2012 day7 - Ruby Clientで遊んでみよう  - ksauzz weblog</title>
+  <meta name="author" content="ksauzz">
+
+  
+  <meta name="description" content="ということでRiakのRubyライブラリをご紹介。RiakのProtocol Buffer/HTTPクライアントであるriak-ruby-clientとObject MapperであるRippleの２本立てです。Rippleに関してはRailsへの導入方法を簡単に説明します。 riak-ruby- &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ksauzz.github.com/blog/2012/12/12/riak-advent-calendar-2013-07">
+  <link href="/favicon.ico" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="ksauzz weblog" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-29777654-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">ksauzz weblog</a></h1>
+  
+    <h2>technical note....</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:ksauzz.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="http://about.me/ksauzz">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">ひとりでやる(?)Riak Advent Calendar 2012 Day7 - Ruby Clientで遊んでみよう</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-12T23:29:00+09:00" pubdate data-updated="true">2012-12-12 23:29</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>ということでRiakのRubyライブラリをご紹介。RiakのProtocol Buffer/HTTPクライアントであるriak-ruby-clientとObject MapperであるRippleの２本立てです。Rippleに関してはRailsへの導入方法を簡単に説明します。</p>
+
+<ul>
+<li>riak-ruby-clientの使い方</li>
+<li>RailsへRippleを導入する</li>
+</ul>
+
+
+<h2><a href="https://github.com/basho/riak-ruby-client">riak-ruby-client</a>の使い方</h2>
+
+<h3>インストール</h3>
+
+<p>gemでサクッとインストールします。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>% gem install riak-client
+</span><span class='line'>Successfully installed riak-client-1.1.0
+</span><span class='line'>1 gem installed</span></code></pre></td></tr></table></div></figure>
+
+
+<h3>利用方法</h3>
+
+<h4>1. Clientの生成</h4>
+
+<p>Procotol Bufferを使うか、HTTPを使うかをnewするときに指定できます。</p>
+
+<h5>1.1. HTTP</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;riak&#39;</span>
+</span><span class='line'><span class="n">client</span> <span class="o">=</span> <span class="no">Riak</span><span class="o">::</span><span class="no">Client</span><span class="o">.</span><span class="n">new</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>1.2. Protocol Buffer</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;riak&#39;</span>
+</span><span class='line'><span class="n">client</span> <span class="o">=</span> <span class="no">Riak</span><span class="o">::</span><span class="no">Client</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">:protocol</span> <span class="o">=&gt;</span> <span class="s2">&quot;pbc&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>1.3. 複数ノードへの接続</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="nb">require</span> <span class="s1">&#39;riak&#39;</span>
+</span><span class='line'><span class="n">client</span> <span class="o">=</span> <span class="no">Riak</span><span class="o">::</span><span class="no">Client</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">:nodes</span> <span class="o">=&gt;</span> <span class="o">[</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:host</span> <span class="o">=&gt;</span> <span class="s1">&#39;10.0.0.1&#39;</span><span class="p">},</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:host</span> <span class="o">=&gt;</span> <span class="s1">&#39;10.0.0.2&#39;</span><span class="p">,</span> <span class="ss">:pb_port</span> <span class="o">=&gt;</span> <span class="mi">7070</span><span class="p">},</span>
+</span><span class='line'>  <span class="p">{</span><span class="ss">:host</span> <span class="o">=&gt;</span> <span class="s1">&#39;10.0.0.3&#39;</span><span class="p">,</span> <span class="ss">:http_port</span> <span class="o">=&gt;</span> <span class="mi">8080</span><span class="p">}</span>
+</span><span class='line'><span class="o">]</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>2. Objectを保存する</h4>
+
+<p>生成したclientを使ってObjectを保存します。
+やり方が３パターンほどあるので、それぞれサンプルをご紹介。
+Riak::RObjectの生成方法が違うだけでやっていることは同じです。</p>
+
+<h5>2.1 シンプルに使う</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">bucket</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">bucket</span><span class="p">(</span><span class="s2">&quot;doc&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">object</span> <span class="o">=</span> <span class="n">bucket</span><span class="o">.</span><span class="n">get_or_new</span><span class="p">(</span><span class="s2">&quot;index.html&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">raw_data</span> <span class="o">=</span> <span class="s2">&quot;&lt;html&gt;&lt;body&gt;Hello, world!&lt;/body&gt;&lt;/html&gt;&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;text/html&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">store</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>2.2 Riak::RObjectを明示的に利用</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">bucket</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">bucket</span><span class="p">(</span><span class="s2">&quot;doc&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">new_one</span> <span class="o">=</span> <span class="no">Riak</span><span class="o">::</span><span class="no">RObject</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">bucket</span><span class="p">,</span> <span class="s2">&quot;index2.html&quot;</span><span class="p">)</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">raw_data</span> <span class="o">=</span> <span class="s2">&quot;&lt;html&gt;&lt;body&gt;Hello, world!&lt;/body&gt;&lt;/html&gt;&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;text/html&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">store</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h5>2.3 ハッシュを使って</h5>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">object</span> <span class="o">=</span> <span class="n">client</span><span class="o">[</span><span class="s1">&#39;doc&#39;</span><span class="o">][</span><span class="s1">&#39;index.html&#39;</span><span class="o">]</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">raw_data</span> <span class="o">=</span> <span class="s2">&quot;&lt;html&gt;&lt;body&gt;Hello, world!&lt;/body&gt;&lt;/html&gt;&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">content_type</span> <span class="o">=</span> <span class="s2">&quot;text/html&quot;</span>
+</span><span class='line'><span class="n">object</span><span class="o">.</span><span class="n">store</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>保存したデータを<a href="https://github.com/jkbr/httpie">httpie</a>で確認してみます。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="sx">% http </span><span class="n">localhost</span><span class="p">:</span><span class="mi">8098</span><span class="o">/</span><span class="n">buckets</span><span class="o">/</span><span class="n">doc</span><span class="o">/</span><span class="n">keys</span><span class="o">/</span><span class="n">index</span><span class="o">.</span><span class="n">html</span>
+</span><span class='line'><span class="no">HTTP</span><span class="o">/</span><span class="mi">1</span><span class="o">.</span><span class="mi">1</span> <span class="mi">200</span> <span class="no">OK</span>
+</span><span class='line'><span class="no">Content</span><span class="o">-</span><span class="no">Length</span><span class="p">:</span> <span class="mi">39</span>
+</span><span class='line'><span class="no">Content</span><span class="o">-</span><span class="no">Type</span><span class="p">:</span> <span class="n">text</span><span class="o">/</span><span class="n">html</span><span class="p">;</span> <span class="n">charset</span><span class="o">=</span><span class="no">UTF</span><span class="o">-</span><span class="mi">8</span>
+</span><span class='line'><span class="no">Date</span><span class="p">:</span> <span class="no">Wed</span><span class="p">,</span> <span class="mi">12</span> <span class="no">Dec</span> <span class="mi">2012</span> <span class="mi">16</span><span class="p">:</span><span class="mi">55</span><span class="p">:</span><span class="mi">44</span> <span class="no">GMT</span>
+</span><span class='line'><span class="no">ETag</span><span class="p">:</span> <span class="s2">&quot;44tAJLzAUJTa20TtR8s5fJ&quot;</span>
+</span><span class='line'><span class="no">Last</span><span class="o">-</span><span class="no">Modified</span><span class="p">:</span> <span class="no">Wed</span><span class="p">,</span> <span class="mi">12</span> <span class="no">Dec</span> <span class="mi">2012</span> <span class="mi">14</span><span class="p">:</span><span class="mi">53</span><span class="p">:</span><span class="mi">48</span> <span class="no">GMT</span>
+</span><span class='line'><span class="no">Link</span><span class="p">:</span> <span class="o">&lt;</span><span class="sr">/buckets/</span><span class="n">doc</span><span class="o">&gt;</span><span class="p">;</span> <span class="n">rel</span><span class="o">=</span><span class="s2">&quot;up&quot;</span>
+</span><span class='line'><span class="no">Server</span><span class="p">:</span> <span class="no">MochiWeb</span><span class="o">/</span><span class="mi">1</span><span class="o">.</span><span class="mi">1</span> <span class="no">WebMachine</span><span class="o">/</span><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">0</span> <span class="p">(</span><span class="n">someone</span> <span class="n">had</span> <span class="n">painted</span> <span class="n">it</span> <span class="n">blue</span><span class="p">)</span>
+</span><span class='line'><span class="no">Vary</span><span class="p">:</span> <span class="no">Accept</span><span class="o">-</span><span class="no">Encoding</span>
+</span><span class='line'><span class="n">X</span><span class="o">-</span><span class="no">Riak</span><span class="o">-</span><span class="no">Vclock</span><span class="p">:</span> <span class="n">a85hYGBgzGDKBVIcypz</span><span class="o">/</span><span class="n">fgacmLY0gymRKY</span><span class="o">+</span><span class="no">VoUbM9hRfFgA</span><span class="o">=</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">html</span><span class="o">&gt;&lt;</span><span class="n">body</span><span class="o">&gt;</span><span class="no">Hello</span><span class="p">,</span> <span class="n">world!</span><span class="o">&lt;</span><span class="sr">/body&gt;&lt;/</span><span class="n">html</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>はい、確認できました。
+簡単ですがriak-ruby-clientの紹介はここまで。</p>
+
+<h2>RailsへRippleを導入する</h2>
+
+<p><a href="https://github.com/basho/ripple">Ripple</a> - A rich Ruby modeling layer for Riak -</p>
+
+<p>RippleはRiakのデータをオブジェクトにマッピングしてくれるライブラリです。ActiveRecordライクに利用できます。
+Riakを使ってアプリケーションを作る際には、基本的にRippleやそれに類似したライブラリを使うことになる筈です。</p>
+
+<p>それではRailsへRippleを導入する方法を簡単に紹介します。</p>
+
+<p>なお、このサンプルではRails 3.2.8を使用しています。</p>
+
+<h4>1. Railsアプリケーションの生成</h4>
+
+<p><code>rails new</code>でアプリケーションを生成します</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="sx">% rails </span><span class="kp">new</span> <span class="n">ripple</span><span class="o">-</span><span class="n">example</span>
+</span><span class='line'>      <span class="n">create</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="no">README</span><span class="o">.</span><span class="n">rdoc</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="no">Rakefile</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">config</span><span class="o">.</span><span class="n">ru</span>
+</span><span class='line'><span class="o">.</span><span class="n">.</span><span class="o">.</span>
+</span><span class='line'><span class="sx">% cd </span><span class="n">ripple</span><span class="o">-</span><span class="n">example</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>2. rippleをdependenciesへ追加</h4>
+
+<p>Gemfileに以下を追加します。
+Railsの3.2.8を使っているのでrippleは1.0.0.beta2を使います。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">gem</span> <span class="s2">&quot;ripple&quot;</span><span class="p">,</span> <span class="s2">&quot;~&gt;1.0.0.beta2&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>bundle installします。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">bundle</span> <span class="n">install</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>3. セットアップ</h4>
+
+<p><code>rails g ripple</code>します。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="sx">% rails </span><span class="n">g</span> <span class="n">ripple</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">config</span><span class="o">/</span><span class="n">ripple</span><span class="o">.</span><span class="n">yml</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">app</span><span class="o">/</span><span class="n">mapreduce</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">app</span><span class="o">/</span><span class="n">mapreduce</span><span class="o">/</span><span class="n">contrib</span><span class="o">.</span><span class="n">js</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">app</span><span class="o">/</span><span class="n">mapreduce</span><span class="o">/</span><span class="n">iso8601</span><span class="o">.</span><span class="n">js</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">app</span><span class="o">/</span><span class="n">mapreduce</span><span class="o">/</span><span class="n">ripple</span><span class="o">.</span><span class="n">js</span>
+</span><span class='line'>      <span class="n">insert</span>  <span class="nb">test</span><span class="o">/</span><span class="n">test_helper</span><span class="o">.</span><span class="n">rb</span>
+</span><span class='line'>      <span class="n">insert</span>  <span class="nb">test</span><span class="o">/</span><span class="n">test_helper</span><span class="o">.</span><span class="n">rb</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>config/ripple.ymlを編集してRiakの設定を自分の環境に合わせます。
+sourceにはローカルのriakコマンドがインストールされているパスを設定してください。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">development</span><span class="p">:</span>
+</span><span class='line'>  <span class="n">http_port</span><span class="p">:</span> <span class="mi">8098</span>
+</span><span class='line'>  <span class="n">pb_port</span><span class="p">:</span> <span class="mi">8087</span>
+</span><span class='line'>  <span class="n">host</span><span class="p">:</span> <span class="mi">127</span><span class="o">.</span><span class="mi">0</span><span class="o">.</span><span class="mi">0</span><span class="o">.</span><span class="mi">1</span>
+</span><span class='line'>  <span class="n">source</span><span class="p">:</span><span class="sr"> /usr/</span><span class="n">local</span><span class="o">/</span><span class="n">bin</span>  <span class="c1">#Default for Homebrew.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>それでは試しにmodelを生成します。
+propertiesとしてname, ageを指定してみました。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="sx">% rails </span><span class="n">g</span> <span class="n">ripple</span><span class="ss">:model</span> <span class="no">User</span> <span class="nb">name</span><span class="ss">:string</span> <span class="n">age</span><span class="ss">:integer</span>
+</span><span class='line'>      <span class="n">create</span>  <span class="n">app</span><span class="o">/</span><span class="n">models</span><span class="o">/</span><span class="n">user</span><span class="o">.</span><span class="n">rb</span>
+</span><span class='line'>      <span class="n">invoke</span>  <span class="n">test_unit</span>
+</span><span class='line'>      <span class="n">create</span>    <span class="nb">test</span><span class="o">/</span><span class="n">unit</span><span class="o">/</span><span class="n">user_test</span><span class="o">.</span><span class="n">rb</span>
+</span><span class='line'>      <span class="n">create</span>    <span class="nb">test</span><span class="o">/</span><span class="n">fixtures</span><span class="o">/</span><span class="n">users</span><span class="o">.</span><span class="n">yml</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>生成したModelはこんな感じになります。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="k">class</span> <span class="nc">User</span>
+</span><span class='line'>  <span class="kp">include</span> <span class="no">Ripple</span><span class="o">::</span><span class="no">Document</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="n">property</span> <span class="ss">:name</span><span class="p">,</span> <span class="nb">String</span>
+</span><span class='line'>  <span class="n">property</span> <span class="ss">:age</span><span class="p">,</span> <span class="nb">Integer</span>
+</span><span class='line'><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h4>4. 動作確認</h4>
+
+<p>consoleで動作確認してみます。
+まずはデータを保存。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="sx">% rails </span><span class="n">console</span>
+</span><span class='line'><span class="no">Loading</span> <span class="n">development</span> <span class="n">environment</span> <span class="p">(</span><span class="no">Rails</span> <span class="mi">3</span><span class="o">.</span><span class="mi">2</span><span class="o">.</span><span class="mi">8</span><span class="p">)</span>
+</span><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">001</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="n">user</span> <span class="o">=</span> <span class="no">User</span><span class="o">.</span><span class="n">new</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">&lt;</span><span class="no">User</span><span class="p">:</span><span class="o">[</span><span class="kp">new</span><span class="o">]</span> <span class="nb">name</span><span class="o">=</span><span class="kp">nil</span> <span class="n">age</span><span class="o">=</span><span class="kp">nil</span><span class="o">&gt;</span>
+</span><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">002</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;たろう&#39;</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;たろう&quot;</span>
+</span><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">003</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="n">user</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="mi">18</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="mi">18</span>
+</span><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">004</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="n">user</span><span class="o">.</span><span class="n">save</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="kp">true</span>
+</span><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">005</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="n">user</span><span class="o">.</span><span class="n">key</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="s2">&quot;QB4nWCL1SpvCe5csclOUgmNX7XN&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>保存後に取得したkeyの値がオブジェクトのIDとなります。
+このIDを使ってデータが保存されたか確認してみます。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">006</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="no">User</span><span class="o">.</span><span class="n">find</span> <span class="s2">&quot;QB4nWCL1SpvCe5csclOUgmNX7XN&quot;</span>
+</span><span class='line'><span class="o">=&gt;</span> <span class="o">&lt;</span><span class="no">User</span><span class="ss">:QB4nWCL1SpvCe5csclOUgmNX7XN</span> <span class="nb">name</span><span class="o">=</span><span class="s2">&quot;たろう&quot;</span> <span class="n">age</span><span class="o">=</span><span class="mi">18</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>はい、保存されていますね。</p>
+
+<p>なお、オブジェクトのID(riakのkey名)は、以下の<code>key\_on</code>をModel内で指定する事により、
+自動生成された値でなく、特定のproperyを使用することができます。
+下記の例だとkey_nameというpropertyがriakのkey名に使われます。</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='ruby'><span class='line'><span class="n">key_on</span> <span class="ss">:key_name</span> <span class="c1"># use :key_name as key name.</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>こんな感じでRiak+Railsのアプリケーションを作って遊んでみてはいかがでしょうか。
+今日はここまで。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">ksauzz</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-12T23:29:00+09:00" pubdate data-updated="true">2012-12-12 23:29</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/objectmapper/'>objectmapper</a>, <a class='category' href='/blog/categories/riak/'>riak</a>, <a class='category' href='/blog/categories/ruby/'>ruby</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://ksauzz.github.com/blog/2012/12/12/riak-advent-calendar-2013-07/" data-via="ksauzz" data-counturl="http://ksauzz.github.com/blog/2012/12/12/riak-advent-calendar-2013-07/" >Tweet</a>
+  
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/11/19/how-to-use-vagrant/" title="Previous Post: Vagrantメモ">&laquo; Vagrantメモ</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/04/30/redbug/" title="Next Post: Erlangのデバッグツール redbug">Erlangのデバッグツール redbug &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+<section>
+<img src="http://gravatar.com/avatar/3cb9536d180c2144c16db29a34e2fd39?s=80" alt="ksauzz" title="ksauzz" />
+</section>
+
+<section>
+  <h1>About Me</h1>
+  <p>software engineer.</p>
+  <a href="http://about.me/ksauzz">http://about.me/ksauzz</a>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/04/30/redbug/">Erlangのデバッグツール redbug</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/12/12/riak-advent-calendar-2013-07/">ひとりでやる(?)Riak Advent Calendar 2012 day7 - Ruby Clientで遊んでみよう </a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/19/how-to-use-vagrant/">Vagrantメモ</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/18/shutdown-erl/">erlの停止</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/16/setup-php/">PHP環境メモ</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+  <h1>Tag Cloud</h1>
+    <span id="tag-cloud"><a href='/blog/categories/cowboy' style='font-size: 115.0%'>cowboy(2)</a> <a href='/blog/categories/erlang' style='font-size: 160.0%'>erlang(8)</a> <a href='/blog/categories/git' style='font-size: 107.5%'>git(1)</a> <a href='/blog/categories/http' style='font-size: 107.5%'>http(1)</a> <a href='/blog/categories/linux' style='font-size: 107.5%'>linux(1)</a> <a href='/blog/categories/mac' style='font-size: 107.5%'>mac(1)</a> <a href='/blog/categories/objectmapper' style='font-size: 107.5%'>objectmapper(1)</a> <a href='/blog/categories/octopress' style='font-size: 107.5%'>octopress(1)</a> <a href='/blog/categories/perl' style='font-size: 107.5%'>perl(1)</a> <a href='/blog/categories/php' style='font-size: 107.5%'>php(1)</a> <a href='/blog/categories/riak' style='font-size: 107.5%'>riak(1)</a> <a href='/blog/categories/ruby' style='font-size: 122.5%'>ruby(3)</a> <a href='/blog/categories/sbt' style='font-size: 107.5%'>sbt(1)</a> <a href='/blog/categories/scala' style='font-size: 107.5%'>scala(1)</a> <a href='/blog/categories/tool' style='font-size: 107.5%'>tool(1)</a> <a href='/blog/categories/vagrant' style='font-size: 107.5%'>vagrant(1)</a> <a href='/blog/categories/vim' style='font-size: 107.5%'>vim(1)</a> <a href='/blog/categories/zeromq' style='font-size: 107.5%'>zeromq(1)</a> </span>
+</section>
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("ksauzz", 4, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/ksauzz" class="twitter-follow-button" data-show-count="false">Follow @ksauzz</a>
+  
+</section>
+
+
+<section>
+  <h1>On Delicious</h1>
+  <div id="delicious"></div>
+  <script type="text/javascript" src="http://feeds.delicious.com/v2/json/ksauzz?count=3&amp;sort=date&amp;callback=renderDeliciousLinks"></script>
+  <p><a href="http://delicious.com/ksauzz">My Delicious Bookmarks &raquo;</a></p>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/ksauzz">@ksauzz</a> on GitHub
+  
+  <script type="text/javascript">
+    $.domReady(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'ksauzz',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+<section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/cowboy'>cowboy (2)</a></li><li><a href='/blog/categories/erlang'>erlang (8)</a></li><li><a href='/blog/categories/git'>git (1)</a></li><li><a href='/blog/categories/http'>http (1)</a></li><li><a href='/blog/categories/linux'>linux (1)</a></li><li><a href='/blog/categories/mac'>mac (1)</a></li><li><a href='/blog/categories/objectmapper'>objectmapper (1)</a></li><li><a href='/blog/categories/octopress'>octopress (1)</a></li><li><a href='/blog/categories/perl'>perl (1)</a></li><li><a href='/blog/categories/php'>php (1)</a></li><li><a href='/blog/categories/riak'>riak (1)</a></li><li><a href='/blog/categories/ruby'>ruby (3)</a></li><li><a href='/blog/categories/sbt'>sbt (1)</a></li><li><a href='/blog/categories/scala'>scala (1)</a></li><li><a href='/blog/categories/tool'>tool (1)</a></li><li><a href='/blog/categories/vagrant'>vagrant (1)</a></li><li><a href='/blog/categories/vim'>vim (1)</a></li><li><a href='/blog/categories/zeromq'>zeromq (1)</a></li></ul>
+</section>
+
+<section>
+  <h1>Coderwall</h1>
+  <ul id="cw_badges">
+    <li class="loading">Status updating...</li>
+  </ul>
+
+  <script type="text/javascript">
+    var coderwall = (function(){
+      function render(options, badges){
+        var fragment = '',
+            t = $(options.target)[0],
+            height = 65,
+            width = 65,
+            index;
+
+        for (index in badges) {
+          fragment += '<a class="cw_badge"title="' + badges[index].description + '" href="http://coderwall.com/' + options.user + '">';
+          fragment +=   '<img alt="' + badges[index].description + '" height="' + width + '" width="' + height + '" src="' + badges[index].badge + '"/>';
+          fragment += '</a>';
+        }
+
+        t.innerHTML = fragment;
+      }
+      return {
+        showBadges: function(options){
+          $.ajax({
+              url: 'http://coderwall.com/' + options.user + '.json?callback=?'
+            , type: 'jsonp'
+            , error: function (err) { $(options.target + ' li.loading').addClass('error').text("Error loading feed"); }
+            , success: function(res) {
+                render(options, res.data.badges);
+            }
+          });
+        }
+      };
+    })();
+
+    $.domReady(function(){
+      if (!window.jXHR){
+        var jxhr = document.createElement('script');
+        jxhr.type = 'text/javascript';
+        jxhr.src = '/javascripts/libs/jXHR.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(jxhr, s);
+      }
+      if (!window.$){
+        var b = document.createElement('script');
+        b.type = 'text/javascript';
+        b.src = '/javascripts/ender.js';
+        var sc = document.getElementsByTagName('script')[0];
+        sc.parentNode.insertBefore(jxhr, s);
+      }
+      coderwall.showBadges({
+        user: 'ksauzz',
+        target: '#cw_badges'
+      });
+    });
+  </script>
+  <style type="text/css">
+    .cw_badge img {
+      padding: 5px;
+      border: 0 none !important;
+      -moz-box-shadow: none !important;
+      -webkit-box-shadow: none !important;
+      -o-box-shadow: none !important;
+      box-shadow: none !important;
+    }
+  </style>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2021 - ksauzz -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'ksauzz-octopress';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ksauzz.github.com/blog/2012/12/12/riak-advent-calendar-2013-07/';
+        var disqus_url = 'http://ksauzz.github.com/blog/2012/12/12/riak-advent-calendar-2013-07/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

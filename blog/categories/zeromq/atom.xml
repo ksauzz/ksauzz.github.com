@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: zeromq | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/zeromq/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[ZeroMQ Rubyバインディングのインストール]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/06/02/zmq-ruby-setup/"/>
+    <updated>2012-06-02T18:34:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/06/02/zmq-ruby-setup</id>
+    <content type="html"><![CDATA[<p>そろそろ<a href="http://www.zeromq.org/">ZeroMQ</a>を触ろうか、ということでRubyバインディングをとりあえずインストール。</p>
+
+<p>ZeroMQのRubyバインディングは<a href="https://github.com/zeromq/rbzmq">rbzmq</a>と<a href="https://github.com/chuckremes/ffi-rzmq">ffi-rzmq</a>があります。
+rbzmqは公式のRubyバインディングでffi-rzmqは<a href="http://www.slideshare.net/copiousfreetime/ffi-building-cross-engine-ruby-extensions">ffi</a>版です。
+ffiに関しては、さっぱり詳しくないのですが、
+MatzRuby使ってる分には基本rbzmqの方で良いのかなと思ってます。
+ffi-rzmqをインストールしたのは<a href="https://github.com/andrewvc/learn-ruby-zeromq">learn-ruby-zeromq</a>を動かしたかった、というだけの理由です。</p>
+
+<p>以下、MacOSでのお話…。</p>
+
+<h2>ZeroMQのインストール</h2>
+
+<p>とりあえずZeroMQをインストールします。
+特になにも考えず現在のStable版である2.2.0を入れました。
+今回はソースビルドしていて、インストール先は/usr/local/zmqです。</p>
+
+<pre><code>git clone https://github.com/zeromq/zeromq2-x.git
+cd zeromq2-x
+git checkout v2.2.0
+./autogen.sh
+./configure --prefix=/usr/local/zmq
+make
+sudo make install
+</code></pre>
+
+<h2>rbzmqのインストール</h2>
+
+<p>--with-zmq-dirでインストールパスを指定します。</p>
+
+<pre><code>gem install zmq -- --with-zmq-dir=/usr/local/zmq
+</code></pre>
+
+<h2>ffi-rzmqのインストール</h2>
+
+<pre><code>gem install ffi-rzmq
+
+echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/zmq/lib" &gt;&gt; ~/.zshrc
+</code></pre>
+
+<p>/usr/local/zmqへインストールしたので、LD_LIBRARY_PATHの指定をしておかないと実行時にコケます。</p>
+
+<p>インストール作業は以上。</p>
+]]></content>
+  </entry>
+  
+</feed>

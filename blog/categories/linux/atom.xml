@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: linux | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/linux/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[cannot open shared object fileの対処]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/06/08/missing-shared-object/"/>
+    <updated>2012-06-08T20:10:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/06/08/missing-shared-object</id>
+    <content type="html"><![CDATA[<p>Linuxでshared objectが見つからない時の対処方法。いい加減メモっとく。</p>
+
+<h2>事象</h2>
+
+<p>svnを叩いたら libaprutil-1.so が見つからないと起こられた。</p>
+
+<pre><code>svn: error while loading shared libraries: libaprutil-1.so.0: cannot open shared object file: No such file or directory
+</code></pre>
+
+<p>ちなみにapacheを/usr/local/apacheへインストールしたのにライブラリの検索パスを通してない事が原因。ということでパスを通しましょう。</p>
+
+<h2>対応方法</h2>
+
+<h3>1. lddでリンクしているライブラリを調べる</h3>
+
+<p>やらなくても良いけど、とりあえず眺めとく。</p>
+
+<pre><code>$ ldd `which svn`
+
+-- 略 --
+
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+libaprutil-1.so.0 =&gt; not found
+libapr-1.so.0 =&gt; not found
+</code></pre>
+
+<p>はい、確かに見つかってないです。</p>
+
+<h3>2. ライブラリの検索パス追加</h3>
+
+<p>/etc/ld.so.conf.d/apache.conf を作成して以下を書く。</p>
+
+<pre><code>/usr/local/apache/lib
+</code></pre>
+
+<p>もしくは /etc/ld.so.conf へ直接追記してもOK.</p>
+
+<h3>3. リンクとキャッシュ(/etc/ld.so.cache)の更新</h3>
+
+<p>ldconfig実行。</p>
+
+<pre><code>$ ldconfig
+</code></pre>
+
+<p>-v オプションで詳細が出力されます。</p>
+
+<h3>4. 動作確認</h3>
+
+<p>パスが通ったか確認。</p>
+
+<pre><code>$ ldconfig -p | grep libapr
+libaprutil-1.so.0 (libc6,x86-64) =&gt; /usr/local/apache/lib/libaprutil-1.so.0
+libaprutil-1.so.0 (libc6) =&gt; /usr/lib/libaprutil-1.so.0
+libaprutil-1.so (libc6,x86-64) =&gt; /usr/local/apache/lib/libaprutil-1.so
+libapr-1.so.0 (libc6,x86-64) =&gt; /usr/local/apache/lib/libapr-1.so.0
+libapr-1.so.0 (libc6) =&gt; /usr/lib/libapr-1.so.0
+libapr-1.so (libc6,x86-64) =&gt; /usr/local/apache/lib/libapr-1.so
+</code></pre>
+
+<p>はい、認識されました。</p>
+
+<p>svnを実行してみます。</p>
+
+<pre><code>$ svn
+使用方法を知りたいときは 'svn help' と打ってください。
+</code></pre>
+
+<p>無事実行できました。</p>
+
+<h2>参考</h2>
+
+<ul>
+<li><a href="http://linuxjm.sourceforge.jp/html/LDP_man-pages/man8/ld.so.8.html">ld.so</a></li>
+<li><a href="http://linuxjm.sourceforge.jp/html/LDP_man-pages/man8/ldconfig.8.html">ldconfig</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

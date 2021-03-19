@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: php | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/php/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[PHP環境メモ]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/11/16/setup-php/"/>
+    <updated>2012-11-16T11:00:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/11/16/setup-php</id>
+    <content type="html"><![CDATA[<p>PHPを触ることになったので環境設定をメモ。</p>
+
+<p>とりあえずは phpenv, php-build, composer, phpunit をチョイス。</p>
+
+<h1>PHP</h1>
+
+<h2>install phpenv</h2>
+
+<p><code>
+curl https://raw.github.com/CHH/phpenv/master/bin/phpenv-install.sh | sh
+echo export PATH = ~/.phpenv/bin:$PATH &gt;&gt; ~/.zshrc
+echo eval "$(phpenv init - zsh)" ~/.zshrc
+source ~/.zshrc
+</code></p>
+
+<h2>install php-build</h2>
+
+<p><code>
+mkdir -p ~/.phpenv/plugins
+cd ~/.phpenv/plugins
+git clone git://github.com/CHH/php-build.git
+curl https://raw.github.com/hnw/php-build/plugin-to-chh-phpenv/bin/rbenv-install &gt; php-build/bin/rbenv-install
+chmod 755 php-build/bin/rbenv-install
+</code></p>
+
+<h2>install php</h2>
+
+<p><code>
+brew install libjpeg re2c mcrypt
+phpenv install 5.4.8
+</code></p>
+
+<h1>Composer (Package manager)</h1>
+
+<h2>install composer</h2>
+
+<p>```
+curl -s https://getcomposer.org/installer | php &amp;&amp; mv -v composer.phar /usr/local/bin/composer</p>
+
+<p>```</p>
+
+<h2>create composer.json</h2>
+
+<p>```
+{</p>
+
+<pre><code>"config": {
+    "bin-dir": "."
+},
+"require": {
+    "xxx/xxxx": "2.*"
+},
+"require-dev": {
+    "phpunit/phpunit": "3.7.*",
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<h2>install dependencies(with require-dev)</h2>
+
+<p>```
+composer install --dev</p>
+
+<pre><code>    or
+</code></pre>
+
+<p>composer update --dev
+```</p>
+
+<h1>PHPUnit</h1>
+
+<h2>configuration file.</h2>
+
+<p>create <code>phpunit.xml.dist</code></p>
+
+<p>```
+&lt;phpunit</p>
+
+<pre><code>bootstrap="vendor/autoload.php"
+processIsolation="false"
+verbose="true"
+strict="false"
+colors="true"&gt;
+&lt;testsuites&gt;
+    &lt;testsuite name="PHPUnit"&gt;
+        &lt;directory&gt;test&lt;/directory&gt;
+    &lt;/testsuite&gt;
+&lt;/testsuites&gt;
+</code></pre>
+
+<p></phpunit>
+```</p>
+
+<h2>run test</h2>
+
+<p><code>
+./phpunit
+</code></p>
+
+<h4>参考</h4>
+
+<ul>
+<li><a href="http://qiita.com/items/81085381c4281e498cde">http://qiita.com/items/81085381c4281e498cde</a></li>
+<li><a href="http://blog.yuyat.jp/archives/1446">http://blog.yuyat.jp/archives/1446</a></li>
+<li><a href="http://d.hatena.ne.jp/hnw/20120828">http://d.hatena.ne.jp/hnw/20120828</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

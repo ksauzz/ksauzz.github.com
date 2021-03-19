@@ -1,0 +1,624 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: erlang | ksauzz weblog]]></title>
+  <link href="http://ksauzz.github.com/blog/categories/erlang/atom.xml" rel="self"/>
+  <link href="http://ksauzz.github.com/"/>
+  <updated>2021-03-19T19:32:36+09:00</updated>
+  <id>http://ksauzz.github.com/</id>
+  <author>
+    <name><![CDATA[ksauzz]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Erlangのデバッグツール redbug]]></title>
+    <link href="http://ksauzz.github.com/blog/2013/04/30/redbug/"/>
+    <updated>2013-04-30T23:40:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2013/04/30/redbug</id>
+    <content type="html"><![CDATA[<p><em>redbug</em>はErlangコードのトレースに使用するデバッグ用ツールです。
+ <a href="https://code.google.com/p/eper/">eper</a> というパフォーマンス関連ツールの一部として配布されています。
+これを使うと、指定した関数のトレースがとても手軽に行えます。</p>
+
+<p>redbugで出来る事</p>
+
+<ul>
+<li>モジュール名、関数名、引数でのトレース対象指定(ワイルドカード可)</li>
+<li>引数の確認</li>
+<li>戻り値の確認</li>
+<li>コールスタックの確認</li>
+</ul>
+
+
+<p>Riakでの実行例</p>
+
+<p>```
+(riak1@127.0.0.1)81> redbug:start({riak_kv_vnode, put,[return, stack]},[{time,5000},{msgs,4},{max_msg_size,10000
+000},{print_depth,10}]).
+ok</p>
+
+<p>20:17:34 &lt;{riak_kv_put_fsm,init,1}> {riak_kv_vnode,put,</p>
+
+<pre><code>                                 [[{685078892498860742907977265335757665463718379520,
+                                    'riak1@127.0.0.1'},
+                                   {707914855582156101004909840846949587645842325504,
+                                    'riak1@127.0.0.1'}],
+                                  {&lt;&lt;"bucket"&gt;&gt;,&lt;&lt;"key1"&gt;&gt;},
+                                  {r_object,&lt;&lt;"buck"...&gt;&gt;,&lt;&lt;...&gt;&gt;,...},
+                                  87431492,63534539854,[]]}
+</code></pre>
+
+<p>  "proc_lib:init_p_do_apply/3 "
+  "gen_fsm:handle_msg/7 "</p>
+
+<p>.. 略 ..</p>
+
+<p>20:17:34 &lt;{riak_kv_put_fsm,init,1}> {riak_kv_vnode,put,6} -> ok
+quitting: msg_count
+```</p>
+
+<p>動作確認環境</p>
+
+<p><code>OSX 10.8.3 R15B03</code>, <code>CentOS 6.3 R15B01</code></p>
+
+<h2>導入方法</h2>
+
+<p>rebarを使っていればrebar.configのdepsにeperを追加するだけです。</p>
+
+<p>```erlang
+{deps, [</p>
+
+<pre><code>    {eper, "0.61", {git, "git://github.com/basho/eper.git", {branch, master}}}
+   ]}.
+</code></pre>
+
+<p>```</p>
+
+<p>TODO: rebarを使わない方法</p>
+
+<h2>動作確認</h2>
+
+<p>sampleモジュールを例に、簡単に動作確認をしてみます。</p>
+
+<h3>1. erlの起動</h3>
+
+<p>まずはErlangシェルを起動します。</p>
+
+<p>```
+% erl -pa ebin/ deps/*/ebin
+Erlang R15B03 (erts-5.9.3.1) [source] [64-bit] [smp:4:4] [async-threads:0] [kernel-poll:false] [dtrace]</p>
+
+<p>Eshell V5.9.3.1  (abort with ^G)
+1>
+```</p>
+
+<h3>2. redbugの起動</h3>
+
+<p><code>redbug:start/1</code>でトレース対象のモジュール名(sample)を指定し、redbugを起動します。
+<small>※15sec(default)でトレース処理が終了してしまうので気をつけましょう。 </small></p>
+
+<p><code>
+1&gt; redbug:start(sample).
+ok
+</code></p>
+
+<h3>3. トレース対象のコードを実行</h3>
+
+<p>トレース対象のsampleモジュールを実行し、トレースの様子を確認します。
+<small>尚、ここで実行する<code>sample:start_link/0</code>は間接的に<code>sample:init/1</code>を呼び出すコードになっています。</small></p>
+
+<p><code>
+2&gt; sample:start_link().
+{ok,&lt;0.41.0&gt;}
+</code></p>
+
+<p>するとコンソールに次の内容が出力されます。</p>
+
+<p>```
+20:43:07 &lt;{erlang,apply,2}> {sample,start_link,[]}</p>
+
+<p>20:43:07 <sample> {sample,init,[[]]}
+quitting: timeout
+```</p>
+
+<p>これがトレース結果です。簡単ですが<code>sample:start_link()</code>と<code>sample:init([])</code>がコールされた事が示されています。</p>
+
+<h2>使用例</h2>
+
+<p>redbugはトレース条件、オプションを指定することで様々なトレースを行うことができます。ここではその一部を紹介します。</p>
+
+<pre><code>Usage
+-----
+redbug:start(Trc)                %% トレース条件のみ指定
+redbug:start(Trc, Opts)          %% トレース条件, オプション指定
+redbug:start(Timeout, Msgs, Trc) %% トレース条件, タイムアウト, トレース数指定(オプション指定不能)
+</code></pre>
+
+<h3>サンプル</h3>
+
+<p>riak_kv_get_fsmモジュールの呼び出しをtrace</p>
+
+<pre><code>redbug:start(riak_kv_get_fsm).
+</code></pre>
+
+<p>riak_kv_get_fsm:initの呼び出しをtrace</p>
+
+<pre><code>redbug:start(riak_kv_get_fsm, init).
+or
+redbug:start({riak_kv_get_fsm, init}).
+</code></pre>
+
+<p>riak_kv_get_fsmの呼び出し、戻り値をtrace</p>
+
+<pre><code>redbug:start({riak_kv_get_fsm, '_', [return]}).
+</code></pre>
+
+<p>riak_kv_get_fsm:initの呼び出し、戻り値、コールスタックをtrace</p>
+
+<pre><code>redbug:start({riak_kv_get_fsm, init, [return, stack]}).
+</code></pre>
+
+<p>riak_kv_put_fsm:execute(pw, _, default)の呼び出し、戻り値をtrace (引数によるマッチング)</p>
+
+<pre><code>redbug:start({riak_kv_put_fsm, '_', [{pw,'_',default},return]}).
+</code></pre>
+
+<p>riak_kv_get_fsm:initの呼び出しをtrace、Timeout 1,000msec</p>
+
+<pre><code>redbug:start({riak_kv_get_fsm, init}, [{time, 1000}]).
+</code></pre>
+
+<p>riak_kv_get_fsm:initの呼び出しをtrace、Timeout 1,000msec</p>
+
+<pre><code>redbug:start({riak_kv_get_fsm, init}, [{time, 1000}, {msgs, 20}]).
+</code></pre>
+
+<h3>その他オプションとそのデフォルト値</h3>
+
+<p><code>
+time         = 15000        % ms
+msgs         = 10           % unit
+proc         = all          % list of procs (or 'all')
+target       = node()       % target node
+cookie       = ''           % target node cookie
+buffered     = no           % output buffering
+arity        = false        % arity instead of args
+print_call   = true         % print calls (see `return_only')
+print_form   = "~s~n"       % format for printing
+print_file   = ""           % file to print to (standard_io)
+print_msec   = false        % print milliseconds in timestamps?
+print_depth  = 999999       % Limit for "~P" formatting depth
+print_re     = ""           % regexp that must match to print
+max_queue    = 5000         % max # of msgs before suicide
+max_msg_size = 50000        % max message size before suicide
+file         = ""           % file to write trace msgs to
+file_size    = 1            % file size (per file [Mb])
+file_count   = 8            % number of files in wrap log
+</code></p>
+
+<p>ざっくりですが以上です。</p>
+
+<p>余談ですが、Riakはeperを含んでいるので、<code>riak attach</code>するだけでredbugで内部をトレースできます。redbugはRiakの勉強にも、もってこいですね。ではでは。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[erlの停止]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/11/18/shutdown-erl/"/>
+    <updated>2012-11-18T23:06:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/11/18/shutdown-erl</id>
+    <content type="html"><![CDATA[<p>erlangシェルを停止させるとき、<code>q()</code>だと停止に時間が掛かり、<code>&lt;Crt+G&gt;, q</code>だと即座に停止する。
+この２つの違いを先日追いかけたので記録しておく。</p>
+
+<h3>q() の場合</h3>
+
+<p>まずはerlシェル上でq()を呼び出した場合の挙動。</p>
+
+<p><code>
+Eshell V5.9.2  (abort with ^G)
+1&gt; q().
+ok
+</code></p>
+
+<p>マニュアルによるとこれは<code>shell_default:q/0</code>を呼び出している。</p>
+
+<p><code>erlang lib/stdlib/src/shell_default.erl
+q()_____-&gt; c:q().
+</code></p>
+
+<p>最終的に<code>init:stop/0</code></p>
+
+<p>```erlang stdlib/src/c.erl
+q() -></p>
+
+<pre><code>init:stop().
+</code></pre>
+
+<p>```</p>
+
+<p><code>init:stop/0</code>はコードが負えなかったので、<code>man init</code>を読む。すると</p>
+
+<p><blockquote><p>All applications are taken down smoothly, all code is unloaded, and all ports are closed before the system terminates.</p></blockquote></p>
+
+<p>となっており、アプリケーションを正式な手順で停止させる雰囲気。</p>
+
+<p>追記: たぶん<code>erts/preloaded/src/init.erl</code>から更に追える。</p>
+
+<h3>&lt;Crl+G>, q の場合</h3>
+
+<p>次にCrl+G, qの場合。(JCLモードで<code>q</code>)</p>
+
+<p><code>
+Eshell V5.9.2  (abort with ^G)
+1&gt;
+User switch command
+ --&gt; q
+</code></p>
+
+<p><code>User switch command</code>でgrepすると<code>user_drv.erl</code>が使われている様子。</p>
+
+<p>```erlang lib/kernel/src/user_drv.erl
+switch_cmd({ok,[{atom,<em>,q}],</em>}, Iport, Oport, Gr) -></p>
+
+<pre><code>case erlang:system_info(break_ignored) of
+true -&gt;_________________% noop
+    io_request({put_chars,unicode,"Unknown command\n"}, Iport, Oport),
+    switch_loop(Iport, Oport, Gr);
+false -&gt;
+    halt()
+end;
+</code></pre>
+
+<p>```</p>
+
+<p><code>man erlang</code>より</p>
+
+<p><blockquote><p>For  integer  Status the Erlang runtime system closes all ports and allows async threads to finish their operations before exiting.</p></blockquote></p>
+
+<h3>まとめ</h3>
+
+<ul>
+<li><code>q()</code> はapplicationの停止、コードのunloadをした上でruntimeを停止</li>
+<li><code>&lt;Crl+G&gt;, q</code>は単にruntimeを停止</li>
+</ul>
+
+
+<p>諸々調べた後でマニュアルに停止方法が纏めてあることに気づいたが、
+なぜか<code>q()</code>が紹介されていなかった。</p>
+
+<p><blockquote><p>4.4  How do I quit the Erlang shell?<br/>  To shut a system down cleanly,  use init:stop().<br/>  Some quick ways are evaluating halt(). or Control+.<br/>  Control+C and Control+G give you access to menus.</p></blockquote></p>
+
+<p>そういえば<code>erts/preloaded</code>にはerlang, prim_inet, initモジュール等が入っているので追っかけてみると楽しいかもしれない。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Erlangのビルド]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/09/30/build-erlang/"/>
+    <updated>2012-09-30T22:56:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/09/30/build-erlang</id>
+    <content type="html"><![CDATA[<p>OSXへErlangをソースからいれた時のメモ。
+--enable-darwin-64bitつけないと後でトラブるよ。という事でメモ。</p>
+
+<pre><code>git clone git://github.com/erlang/otp.git
+cd otp
+git checkout -b OTP_R15B03 OTP_R15B03
+./otp_build autoconf
+./otp_build configure --disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll  --enable-darwin-64bit --prefix=/usr/local/erlang/OTP_R15B03
+make &amp;&amp; make install
+</code></pre>
+
+<p>PREFIXはお好みで。</p>
+
+<p>あとは適当にPATHとか足しとく</p>
+
+<h4>DTrace support</h4>
+
+<p><code>--with-dynamic-trace=dtrace</code>をconfigureのオプションに追加する。</p>
+
+<p><code>
+./otp_build configure --with-dynamic-trace=dtrace --disable-hipe --enable-smp-support --enable-threads --enable-kernel-poll  --enable-darwin-64bit --prefix=/usr/local/erlang/OTP_R15B03
+</code></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[cowboy clientを使う]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/05/24/cowboy-client/"/>
+    <updated>2012-05-24T20:43:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/05/24/cowboy-client</id>
+    <content type="html"><![CDATA[<p>ErlangのWebフレームワークCowboyにはcowboy_clientというクライアントモジュールが含まれています。
+今回はこのcowboy_clientの基本的な使い方を紹介します。</p>
+
+<h2>利用方法</h2>
+
+<p>cowboy_clientは以下の流れで利用します。</p>
+
+<ol>
+<li>clientレコードの生成 (init/1)</li>
+<li>接続の確立 (connect/4)</li>
+<li>リクエスト送信 (request/3, request/4, request/5)</li>
+<li>レスポンスヘッダーの取得 (response/1)</li>
+<li>レスポンスの取得 (response_body/1)</li>
+</ol>
+
+
+<p>これを実際のコードで表現すると、こんな感じです。</p>
+
+<p><code>erlang
+{ok, Client1} = cowboy_client:init([]),
+{ok, Client2} = cowboy_client:connect(cowboy_tcp_transport, "localhost", 8080, Client1),
+{ok, Client3} = cowboy_client:request(&lt;&lt;"GET"&gt;&gt;, &lt;&lt;"/contents.html"&gt;&gt;, [], Client2),
+{ok, Status, Headers, Client4} = cowboy_client:response(Client3),
+{ok, Body, Client5} = cowboy_client:response_body(Client4),
+</code></p>
+
+<p>以降でinit/1以外の各行を個別に確認してゆきます。</p>
+
+<h3>接続の確立 (connect/4)</h3>
+
+<p>Transport, Host, Portを指定してコネクションを生成します。
+恐らくSSL通信の場合はcowboy_ssl_transportを利用すると思われます。
+<code>erlang
+{ok, Client2} = cowboy_client:connect(cowboy_tcp_transport, "localhost", 8080, Client1),
+</code></p>
+
+<h3>HTTPリクエスト (request/4)</h3>
+
+<p>request関数は３種類用意されています。
+リクエストヘッダー、リクエストボディ設定の有無でこれらを使い分けます。</p>
+
+<ul>
+<li>request(Method, Url, Client)</li>
+<li>request(Method, Url, Headers, Client)</li>
+<li>request(Method, Url, Headers, Data, Client)</li>
+</ul>
+
+
+<p><code>erlang
+{ok, Client3} = cowboy_client:request(&lt;&lt;"GET"&gt;&gt;, &lt;&lt;"/contents.html"&gt;&gt;, [], Client2),
+</code></p>
+
+<p>なお、Headerは以下のようなリストで指定します。</p>
+
+<p><code>erlang
+[{&lt;&lt;"connection"&gt;&gt;, &lt;&lt;"close"&gt;&gt;}]
+</code></p>
+
+<h3>HTTPレスポンス (response/1, response_body/1)</h3>
+
+<p>ヘッダー、ステータスコードの取得(response/1)とボディの取得(response_body/1)は、個別に行う必要があります。
+必要に応じてコールします。</p>
+
+<p><code>erlang
+{ok, Status, Headers, Client4} = cowboy_client:response(Client3),
+{ok, Body, _Client5} = cowboy_client:response_body(Client4),
+</code></p>
+
+<p>以上がリクエスト送信からレスポンス受信までの流れです。</p>
+
+<h2>その他</h2>
+
+<h3>POSTリクエスト</h3>
+
+<p>POSTする場合は、request/4を使用してPOSTメソッドの指定、リクエストボディを指定します。</p>
+
+<p><code>erlang
+Method = &lt;&lt;"POST"&gt;&gt;,
+Url = &lt;&lt;"/post_content"&gt;&gt;,
+Headers = [],
+Data = &lt;&lt;"key=value"&gt;&gt;
+{ok, Client3} = cowboy_client:request(Method, Url, Headrs, Data, Client2),
+</code></p>
+
+<h3>raw_request/2</h3>
+
+<p>cowboy_clientでは生のHTTPリクエストを送信するraw_request/2関数が用意されています。
+テスト目的でイレギュラーなHTTPリクエストを送信するときに便利です。</p>
+
+<p><code>erlang
+{ok, Client1} = cowboy_client:init([]),
+{ok, Client2} = cowboy_client:connect(cowboy_tcp_transport, "localhost", 8080, Client1),
+{ok, Client3} = cowboy_client:raw_request(&lt;&lt;"GET /contents.html HTTP/1.1\r\nHost: localhost\r\n\r\n"&gt;&gt;, Client2),
+{ok, Status, Headers, Client4} = cowboy_client:response(Client3),
+{ok, Body, _Client5} = cowboy_client:response_body(Client4),
+</code></p>
+
+<p>以上、大雑把なcowboy_clientの紹介でした。</p>
+
+<p>そもそもcowboyのテストを書くために書かれたモジュールのようなので、
+基本的にはHTTP周りのテストを書く際に利用すると良いかと思います。</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Cowboyメモ]]></title>
+    <link href="http://ksauzz.github.com/blog/2012/05/04/cowboy/"/>
+    <updated>2012-05-04T21:50:00+09:00</updated>
+    <id>http://ksauzz.github.com/blog/2012/05/04/cowboy</id>
+    <content type="html"><![CDATA[<p>CowboyはErlangの軽量Webアプリケーションフレームワークです。
+まだドキュメント化されていない部分が多いので軽くメモ。</p>
+
+<h2>基本</h2>
+
+<p>基本的な利用方法は某氏のブログをどうぞ。</p>
+
+<p><a href="http://d.hatena.ne.jp/Voluntas/20120407/1333784371">http://d.hatena.ne.jp/Voluntas/20120407/1333784371</a></p>
+
+<h2>リクエストの処理</h2>
+
+<p>cowboyではhandle/2の引数に<a href="https://github.com/extend/cowboy/blob/master/include/http.hrl">#http_req</a>が渡ってきます。
+基本的にはこのhttp_reqをcowboy_http_reqの関数へ渡し、リクエストデータの取得、レスポンスデータの生成を行います。</p>
+
+<h3>レスポンスの送信</h3>
+
+<p>レスポンスの送信にはcowboy_http_req:reply/xを使います。
+下記ではステータスコード、レスポンスボディ、レスポンスヘッダーをreply関数へ渡し、
+レスポンスを送信しています。</p>
+
+<p>```erlang
+handle(Req, State) -></p>
+
+<pre><code>StatusCode  = 200,
+Body = &lt;&lt;"Hello world!!"&gt;&gt;,
+Header = [{'Server', [&lt;&lt;"Hello Cowboy Server!!!"&gt;&gt;]}],
+{ok, Req2} = cowboy_http_req:reply(StatusCode, Header, Body, Req),
+{ok, Req2, State}.
+</code></pre>
+
+<p>```</p>
+
+<p>このコードはcowboy_http_reqモジュールのset_resp_xxx関数を使って以下の様に書くこともできます。
+ここで新しく生成されるReq_x_には、セットしたレスポンスボディ、レスポンスヘッダーがセットされています。</p>
+
+<p>```erlang
+handle(Req, State) -></p>
+
+<pre><code>StatusCode  = 200,
+Body = &lt;&lt;"Hello world!!"&gt;&gt;,
+{ok, Req1} = cowboy_http_req:set_resp_body(Body, Req),
+{ok, Req2} = cowboy_http_req:set_resp_header('Server', &lt;&lt;"Hello Cowboy Server!!"&gt;&gt;, Req1),
+{ok, Req3} = cowboy_http_req:reply(StatusCode, Req2),
+{ok, Req3, State}.
+</code></pre>
+
+<p>```</p>
+
+<h3>URL Queryの取得</h3>
+
+<p>Queryはcowboy_http_req:qs_vals/1, qs_val/2, qs_val/3で取得できます。</p>
+
+<p>```erlang
+handle(Req, State) -></p>
+
+<pre><code>{QsList, Req1} = cowboy_http_req:qs_vals(Req),
+...
+{Value, Req1} = cowboy_http_req:qs_val(&lt;&lt;"key"&gt;&gt;, Req),
+...
+{ValueOrDefault, Req1} = cowboy_http_req:qs_val(&lt;&lt;"key"&gt;&gt;, Req, DefautVal),
+</code></pre>
+
+<p>```</p>
+
+<h3>Postデータの取得</h3>
+
+<p>postしたデータはcowboy_http_req:body_qs/1で取得できます。
+データはproplistsで返ってきます。</p>
+
+<p>```erlang
+handle(Req, State) -></p>
+
+<pre><code>{QsList, Req1} = cowboy_http_req:body_qs(Req),
+case lists:keyfind(&lt;&lt;"key"&gt;&gt;, 1, QsList) of
+    false -&gt;
+        ...,
+    {&lt;&lt;"key"&gt;&gt;, Value} -&gt;
+        ....
+</code></pre>
+
+<p>```</p>
+
+<h2>Cookie操作</h2>
+
+<p>cookieの操作も同様にcowboy_http_req:cookie/2, set_resp_cookie/3を使います。</p>
+
+<h3>Cookieの取得</h3>
+
+<p>```erlang
+handle(Req, State) -></p>
+
+<pre><code>case cowboy_http_req:cookie(Key, Req) of
+    {undefined, Req1} -&gt;
+        ...
+    {SessionId, Req1} -&gt;
+        ...
+</code></pre>
+
+<p>```</p>
+
+<h3>Cookieのセット</h3>
+
+<p>```erlang
+handle(Req, State) -></p>
+
+<pre><code>{ok,  Req1} = cowboy_http_req:set_resp_cookie(&lt;&lt;"Key"&gt;&gt;, &lt;&lt;"Value"&gt;&gt;, [max_age, 1000],  Req),
+...
+</code></pre>
+
+<p>```</p>
+
+<h2>静的ファイルの処理(cowboy_http_static)</h2>
+
+<p>静的ファイルをレスポンスに利用する場合、
+cowboy_http_staticが用意されているので、これを使います。</p>
+
+<p><strong>cowboy_http_staticは2012/05/07現在experimentalです。</strong></p>
+
+<h3>Dispatch設定</h3>
+
+<p>cowboyのlistener起動時に指定するdispatcher設定でcowboy_http_staticをhandlerとして指定します。
+そしてOptionにdirectory, mimetypsを指定します。</p>
+
+<p>下記の例では/static/xxxへのアクセスに対してcowboy_http_staticが使用されます。</p>
+
+<p>```erlang
+Dispatch = [</p>
+
+<pre><code>{'_', [
+    {[&lt;&lt;"static"&gt;&gt;, '...'], cowboy_http_static, [
+            {directory, {priv_dir, application_name, [&lt;&lt;"www"&gt;&gt;]}},
+            {mimetypes, [
+                    {&lt;&lt;".html"&gt;&gt;, [&lt;&lt;"text/html"&gt;&gt;]},
+                    {&lt;&lt;".css"&gt;&gt;,  [&lt;&lt;"text/css"&gt;&gt;]},
+                    {&lt;&lt;".js"&gt;&gt;,   [&lt;&lt;"application/javascript"&gt;&gt;]}]]}]},
+    ...
+</code></pre>
+
+<p>```</p>
+
+<h3>directoryオプション</h3>
+
+<p>静的ファイルのルートディレクトリ。priv_dirを指定すると指定したアプリケーションのprivディレクトリが参照されます。
+直接ディレクトリを指定することも可能です。</p>
+
+<p>以下、cowboy_http_staticのedocより
+```erlang
+  %% Serve files from /var/www/ under http://example.com/static/
+  {[&lt;&lt;"static">>, '...'], cowboy_http_static,</p>
+
+<pre><code>  [{directory, "/var/www"}]}
+</code></pre>
+
+<p>  %% Serve files from the current working directory under http://example.com/static/
+  {[&lt;&lt;"static">>, '...'], cowboy_http_static,</p>
+
+<pre><code>  [{directory, &lt;&lt;"./"&gt;&gt;}]}
+</code></pre>
+
+<p>  %% Serve files from cowboy/priv/www under http://example.com/
+  {['...'], cowboy_http_static,</p>
+
+<pre><code>  [{directory, {priv_dir, cowboy, [&lt;&lt;"www"&gt;&gt;]}}]}
+</code></pre>
+
+<p>```</p>
+
+<h3>mimetypesオプション</h3>
+
+<p>静的ファイルの拡張子毎にConten-Typeを指定します。</p>
+
+<p>Content-Typeのデフォルト値が<em>application/octet-stream</em>になっているので、
+適切な値を設定する必要があります。</p>
+
+<p><a href="https://github.com/spawngrid/mimetypes">spawngrid/mimetypes</a>を使うことでmimetypesを、
+以下の様にも書ける様です。(未検証)</p>
+
+<p><code>erlang
+{mimetypes, {fun mimetypes:path_to_mimes/2, default}}
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>
